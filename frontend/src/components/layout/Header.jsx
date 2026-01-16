@@ -11,45 +11,50 @@ const Header = () => {
     <header className="bg-white shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3">
-            <img 
-              src={logo} 
-              alt="Logo Fe y Alegría" 
-              className="h-11 w-auto object-contain"
-            />
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Fe y Alegría</h1>
-              <p className="text-xs text-gray-600">Gestión de Espacios</p>
-            </div>
-          </Link>
+          {/* Logo - Pegado completamente a la izquierda */}
+          <div className="flex-shrink-0">
+            <Link to="/" className="flex items-center space-x-3">
+              <img 
+                src={logo} 
+                alt="Logo Fe y Alegría" 
+                className="h-11 w-auto object-contain"
+              />
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">Fe y Alegría</h1>
+                <p className="text-xs text-gray-600">Gestión de Espacios</p>
+              </div>
+            </Link>
+          </div>
 
-          {/* Navegación Desktop */}
-          <nav className="hidden md:flex items-center space-x-8">
-            <Link to="/" className="text-gray-700 hover:text-blue-600 font-medium">
-              Inicio
-            </Link>
-            <Link to="/espacios" className="text-gray-700 hover:text-blue-600 font-medium">
-              Espacios
-            </Link>
-            <Link to="/guia" className="text-gray-700 hover:text-blue-600 font-medium">
-              Guía de Reservas
-            </Link>
-            <Link
-              to="/login"
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          {/* Contenedor para navegación y botón móvil - Pegado a la derecha */}
+          <div className="flex items-center">
+            {/* Navegación Desktop - Pegada completamente a la derecha */}
+            <nav className="hidden md:flex items-center space-x-8">
+              <Link to="/" className="text-gray-700 hover:text-blue-600 text-base">
+                Inicio
+              </Link>
+              <Link to="/espacios" className="text-gray-700 hover:text-blue-600 text-base">
+                Espacios
+              </Link>
+              <Link to="/guia" className="text-gray-700 hover:text-blue-600 text-base">
+                Guía de Reservas
+              </Link>
+              <Link
+                to="/login"
+                className="bg-blue-700 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-900 transition-colors ml-8"
+              >
+                Iniciar Sesión
+              </Link>
+            </nav>
+
+            {/* Botón Menú Mobile */}
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="md:hidden text-gray-700 ml-4"
             >
-              Iniciar Sesión
-            </Link>
-          </nav>
-
-          {/* Botón Menú Mobile */}
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden text-gray-700"
-          >
-            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
+              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
         </div>
 
         {/* Menú Mobile */}

@@ -1,9 +1,9 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Calendar, Clock, Shield, Bell, CheckCircle, ArrowRight, Users, BarChart3, Library, BookOpen, MapPin, Cross, Search } from 'lucide-react';
+import { Calendar, Clock, Shield, Bell, CheckCircle, ArrowRight, Users, BarChart3, Library, BookOpen, MapPin, Cross } from 'lucide-react';
 
-// Opción 1: Si tienes video local
-import heroVideo from '../assets/videos/video.mp4';
+// Importar la imagen de fondo
+import fondoImage from '../assets/images/fondofinal.png';
 
 // Importar las imágenes de los espacios
 import cerpaImage from '../assets/images/cerpa.png';
@@ -26,7 +26,7 @@ const Home = () => {
   const features = [
     { 
       icon: <Calendar />, 
-      title: 'Reservas Inteligentes', 
+      title: 'Reservación', 
       desc: 'Sistema de solicitud automatizada con validación de horarios en tiempo real.'
     },
     { 
@@ -87,66 +87,43 @@ const Home = () => {
     },
   ];
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    // Aquí puedes agregar la lógica de búsqueda si la necesitas
-    // Por ahora solo redirige a la página de espacios
-    window.location.href = '/espacios';
-  };
-
   return (
     <div className="min-h-screen">
-      {/* Hero Section CON VIDEO DE FONDO */}
+      {/* Hero Section CON IMAGEN DE FONDO */}
       <section className="relative overflow-hidden section-padding min-h-[600px] flex items-center">
-        {/* Video de fondo - SIN OVERLAY */}
+        {/* Imagen de fondo con posicionamiento ajustado */}
         <div className="absolute inset-0 overflow-hidden">
-          <video
-            className="absolute min-w-full min-h-full w-auto h-auto object-cover"
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="auto"
-          >
-            <source src={heroVideo} type="video/mp4" />
-            Tu navegador no soporta videos HTML5.
-          </video>
+          <div 
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ 
+              backgroundImage: `url(${fondoImage})`,
+              backgroundPosition: 'center 35%' // Ajustado para que la imagen quede más arriba
+            }}
+          ></div>
+          {/* Overlay oscuro para mejor contraste del texto */}
+          <div className="absolute inset-0 bg-black/40"></div>
         </div>
 
-        {/* Contenido sobre el video */}
-        <div className="relative max-w-7xl mx-auto w-full">
-          <div className="text-center">
-            
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mt-10 mb-6 leading-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
-              Gestiona los espacios educativos
+        {/* Contenido sobre la imagen - ALINEADO A LA IZQUIERDA */}
+        <div className="relative max-w-7xl mx-auto w-full px-6">
+          <div className="max-w-2xl text-left">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mt-10 mb-4 leading-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
+              Gestiona tus espacios educativos
               <span className="block text-white mt-2">
-                de manera inteligente
+                de manera eficiente
               </span>
             </h1>
             
-            {/* BARRA DE BÚSQUEDA MÁS CORTA Y DE COLOR GRIS CLARO SÓLIDO */}
-            <div className="max-w-2xl mx-auto mb-10 px-4">
-              <div className="relative">
-                <form onSubmit={handleSearch}>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Search className="h-5 w-5 text-gray-600" />
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Buscar espacios..."
-                      className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 bg-gray-200 text-gray-800 placeholder-gray-600 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300 text-sm shadow-sm"
-                    />
-                  </div>
-                </form>
-              </div>
-            </div>
+            {/* Subtítulo inventado */}
+            <p className="text-xl text-white/90 mb-10 max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">
+              Maximiza el uso de instalaciones para un colegio más productivo
+            </p>
             
-            {/* BOTÓN SOLO DE COMENZAR A RESERVAR - MODIFICADO */}
-            <div className="flex justify-center">
+            {/* BOTÓN SOLO DE COMENZAR A RESERVAR - AZUL MUY OSCURO */}
+            <div className="flex justify-start">
               <Link
                 to="/login"
-                className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl bg-orange-500 text-white hover:bg-orange-600 transition-all duration-300 rounded-lg"
+                className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl bg-blue-600 text-white hover:bg-blue-800 transition-all duration-300 rounded-lg"
               >
                 Comenzar ahora
               </Link>

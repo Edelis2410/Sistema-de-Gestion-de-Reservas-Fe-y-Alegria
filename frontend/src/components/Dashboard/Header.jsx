@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, User, Bell, ChevronDown } from 'lucide-react';
+import { Search, Bell, ChevronDown } from 'lucide-react';
 
 const Header = ({ user, isSidebarCollapsed }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,7 +33,7 @@ const Header = ({ user, isSidebarCollapsed }) => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="block w-full pl-10 pr-3 py-1.5 border border-gray-300 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                  placeholder="Buscar reservas, espacios, documentos..."
+                  placeholder="Buscar reservas, espacios ..."
                 />
               </form>
             </div>
@@ -53,8 +53,12 @@ const Header = ({ user, isSidebarCollapsed }) => {
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 className="flex items-center space-x-2 p-1 hover:bg-gray-100 rounded-xl transition-colors"
               >
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-                  <User className="h-4 w-4" />
+                <div className="w-8 h-8 rounded-full overflow-hidden border border-gray-200">
+                  <img 
+                    src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" 
+                    alt={`${user?.name || 'Usuario'}`}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div className="text-left hidden lg:block">
                   <p className="font-medium text-gray-900 text-xs">

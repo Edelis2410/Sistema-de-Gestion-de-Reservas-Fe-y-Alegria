@@ -3,19 +3,18 @@ import {
   Calendar, 
   CheckCircle, 
   Clock, 
-  XCircle, 
-  AlertCircle,
-  BarChart3,
+  XCircle,
   TrendingUp,
-  Users,
-  MapPin,
-  Home,
-  Bell,
-  FileText
+  CalendarDays,
+  PlusCircle,
+  ChevronRight,
+  Users
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-// CAMBIA ESTO: Cambia Main por Dashboard
 const Dashboard = ({ user, isSidebarCollapsed }) => {
+  const navigate = useNavigate();
+  
   // Datos de ejemplo para gráficos de torta
   const reservationStats = {
     approved: 8,
@@ -32,463 +31,438 @@ const Dashboard = ({ user, isSidebarCollapsed }) => {
   const cancelledPercentage = reservationStats.total > 0 ? 
     Math.round((reservationStats.cancelled / reservationStats.total) * 100) : 0;
 
-  // Espacios disponibles con sus capacidades
-  const spaces = [
-    { 
-      name: 'Capilla', 
-      description: 'Espacio Espiritual',
-      capacity: 100,
-      type: 'Religioso',
-      icon: <Home className="h-4 w-4" />,
-      color: 'bg-purple-100 text-purple-600'
-    },
-    { 
-      name: 'CERPA', 
-      description: 'Auditorio Principal',
-      capacity: 200,
-      type: 'Auditorio',
-      icon: <Users className="h-4 w-4" />,
-      color: 'bg-blue-100 text-blue-600'
-    },
-    { 
-      name: 'Sacramento', 
-      description: 'Salón de Eventos',
-      capacity: 150,
-      type: 'Eventos',
-      icon: <Calendar className="h-4 w-4" />,
-      color: 'bg-green-100 text-green-600'
-    },
-    { 
-      name: 'Salón Múltiple', 
-      description: 'Espacio Polivalente',
-      capacity: 300,
-      type: 'Polivalente',
-      icon: <MapPin className="h-4 w-4" />,
-      color: 'bg-yellow-100 text-yellow-600'
-    },
-  ];
-
-  // Recordatorios importantes
-  const reminders = [
+  // Solo 3 reservas próximas del docente
+  const upcomingReservations = [
     {
-      type: 'importante',
-      title: 'Reserva Recurrente',
-      message: 'Tu reserva semanal en la Capilla está activa hasta fin de semestre.',
-      icon: <Bell className="h-4 w-4" />
+      id: 1,
+      espacio: 'CERPA',
+      actividad: 'Conferencia de Innovación',
+      fecha: '15 Ene',
+      dia: 'Lunes',
+      hora: '08:00 - 12:00',
+      estado: 'confirmed',
+      asistentes: 180,
+      tipoActividad: 'Conferencia'
     },
     {
-      type: 'info',
-      title: 'Capacidad Máxima',
-      message: 'Recuerda respetar la capacidad máxima de cada espacio.',
-      icon: <Users className="h-4 w-4" />
+      id: 2,
+      espacio: 'Salón Múltiple',
+      actividad: 'Taller de Capacitación',
+      fecha: '15 Ene',
+      dia: 'Lunes',
+      hora: '14:00 - 18:00',
+      estado: 'confirmed',
+      asistentes: 150,
+      tipoActividad: 'Taller'
     },
     {
-      type: 'advertencia',
-      title: 'Cancelaciones',
-      message: 'Cancela con 24h de anticipación para evitar penalizaciones.',
-      icon: <AlertCircle className="h-4 w-4" />
+      id: 3,
+      espacio: 'Sacramento',
+      actividad: 'Reunión de Departamento',
+      fecha: '16 Ene',
+      dia: 'Martes',
+      hora: '10:00 - 12:00',
+      estado: 'pending',
+      asistentes: 80,
+      tipoActividad: 'Reunión'
     }
   ];
 
-  // Calcular porcentaje de reservas (basado en un objetivo de 20 reservas)
-  const totalReservasPercentage = Math.min((reservationStats.total / 20) * 100, 100);
-  const espaciosActivosPercentage = 100; // 4 de 4 espacios activos
-  const tasaAprobacionPercentage = approvedPercentage;
+  // Resumen de la semana (solo con las 3 reservas)
+  const weekSummary = {
+    totalReservas: upcomingReservations.length,
+    asistentesTotales: upcomingReservations.reduce((sum, r) => sum + r.asistentes, 0),
+    horasTotales: upcomingReservations.length * 4 // estimado 4 horas por reserva
+  };
+
+  // Datos para el gráfico
+  const chartData = [
+    { 
+      name: 'Aprobadas', 
+      value: reservationStats.approved, 
+      percentage: approvedPercentage, 
+      color: '#1D4ED8',
+      lightColor: '#DBEAFE',
+      icon: CheckCircle
+    },
+    { 
+      name: 'Pendientes', 
+      value: reservationStats.pending, 
+      percentage: pendingPercentage, 
+      color: '#3B82F6',
+      lightColor: '#E0F2FE',
+      icon: Clock
+    },
+    { 
+      name: 'Canceladas', 
+      value: reservationStats.cancelled, 
+      percentage: cancelledPercentage, 
+      color: '#60A5FA',
+      lightColor: '#F0F9FF',
+      icon: XCircle
+    }
+  ];
+
+  // Calcular ángulos para el gráfico de dona
+  const total = chartData.reduce((sum, item) => sum + item.percentage, 0);
+  let cumulativePercentage = 0;
+
+  const chartSegments = chartData.map(item => {
+    const segment = {
+      ...item,
+      startAngle: cumulativePercentage,
+      endAngle: cumulativePercentage + (item.percentage / total) * 360
+    };
+    cumulativePercentage = segment.endAngle;
+    return segment;
+  });
+
+  // Función para navegar al formulario de nueva reserva
+  const handleNewReservation = () => {
+    navigate('/docente/reservas/crear');
+  };
+
+  // Función para ver el historial completo de reservas
+  const handleViewAllReservations = () => {
+    navigate('/docente/reservas/historial');
+  };
+
+  // Función para ver detalles de una reserva específica
+  const handleViewReservationDetails = (reservationId) => {
+    navigate(`/docente/reservas/${reservationId}`);
+  };
 
   return (
     <div className="p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Mensaje de Bienvenida Centrado - más pequeño */}
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            ¡Bienvenido, <span className="text-blue-600">{user?.name || 'Docente'}!</span>
-          </h1>
-          <p className="text-gray-600 text-sm">
-            Sistema de Gestión de Espacios Académicos y Eventos
-          </p>
+        {/* Encabezado simplificado */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+          <div className="mb-4 md:mb-0">
+            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          </div>
+          
+          <button 
+            onClick={handleNewReservation}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
+          >
+            <PlusCircle className="h-4 w-4" />
+            Nueva Reserva
+          </button>
         </div>
 
-        {/* Estadísticas Principales con medidores */}
-        <div className={`grid grid-cols-1 ${isSidebarCollapsed ? 'md:grid-cols-3' : 'md:grid-cols-3'} gap-8 mb-8`}>
-          {/* Medidor de Total Reservas */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col items-center">
-            <div className="relative w-32 h-32 mb-4">
-              {/* Semicírculo de fondo */}
-              <div className="absolute inset-0">
-                <svg width="100%" height="100%" viewBox="0 0 100 50" className="overflow-visible">
-                  {/* Fondo del semicírculo */}
-                  <path 
-                    d="M 10,45 A 40,40 0 0,1 90,45" 
-                    fill="none" 
-                    stroke="#e5e7eb" 
-                    strokeWidth="8"
-                    strokeLinecap="round"
-                  />
-                  {/* Arco de progreso */}
-                  <path 
-                    d="M 10,45 A 40,40 0 0,1 90,45" 
-                    fill="none" 
-                    stroke="#3b82f6" 
-                    strokeWidth="8"
-                    strokeLinecap="round"
-                    strokeDasharray={`${totalReservasPercentage * 1.25} 125`}
-                    strokeDashoffset="0"
-                  />
-                </svg>
-              </div>
-              
-              {/* Número en el centro */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl font-bold text-gray-900">{reservationStats.total}</span>
-                <span className="text-xs text-gray-500 mt-1">Reservas</span>
-              </div>
+        {/* Resumen de la semana */}
+        <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-6 mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900 mb-1">Resumen de esta semana</h2>
+              <p className="text-gray-600 text-sm">Tienes {weekSummary.totalReservas} reservas programadas</p>
             </div>
             
-            <div className="text-center">
-              <h3 className="font-bold text-gray-900 mb-1">Total Reservas</h3>
-              <div className="flex items-center justify-center text-green-500 text-xs">
-                <TrendingUp className="h-3 w-3 mr-1" />
-                <span>+15% este mes</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Medidor de Espacios Activos */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col items-center">
-            <div className="relative w-32 h-32 mb-4">
-              {/* Línea circular con puntos */}
-              <div className="absolute inset-0">
-                <svg width="100%" height="100%" viewBox="0 0 100 100" className="overflow-visible">
-                  {/* Círculo de fondo */}
-                  <circle 
-                    cx="50" 
-                    cy="50" 
-                    r="40" 
-                    fill="none" 
-                    stroke="#e5e7eb" 
-                    strokeWidth="8"
-                  />
-                  
-                  {/* Puntos a lo largo de la línea (4 puntos para 4 espacios) */}
-                  {[0, 90, 180, 270].map((angle, index) => {
-                    const radian = (angle * Math.PI) / 180;
-                    const x = 50 + 40 * Math.cos(radian);
-                    const y = 50 + 40 * Math.sin(radian);
-                    
-                    return (
-                      <circle 
-                        key={index}
-                        cx={x}
-                        cy={y}
-                        r="6"
-                        fill="#10b981"
-                        stroke="white"
-                        strokeWidth="2"
-                      />
-                    );
-                  })}
-                </svg>
+            <div className="flex flex-wrap gap-6">
+              <div className="text-center">
+                <div className="flex items-center gap-2">
+                  <div className="bg-blue-100 p-2 rounded-lg">
+                    <Calendar className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <span className="text-2xl font-bold text-gray-900">{weekSummary.totalReservas}</span>
+                </div>
+                <p className="text-xs text-gray-600 mt-1">Reservas</p>
               </div>
               
-              {/* Número en el centro */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl font-bold text-gray-900">4</span>
-                <span className="text-xs text-gray-500 mt-1">Activos</span>
-              </div>
-            </div>
-            
-            <div className="text-center">
-              <h3 className="font-bold text-gray-900 mb-1">Espacios Activos</h3>
-              <p className="text-xs text-gray-500">Capacidad: 750 pers.</p>
-            </div>
-          </div>
-
-          {/* Medidor de Tasa de Aprobación */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col items-center">
-            <div className="relative w-32 h-32 mb-4">
-              {/* Arco circular completo */}
-              <div className="absolute inset-0">
-                <svg width="100%" height="100%" viewBox="0 0 100 100" className="overflow-visible">
-                  {/* Fondo del círculo */}
-                  <circle 
-                    cx="50" 
-                    cy="50" 
-                    r="40" 
-                    fill="none" 
-                    stroke="#e5e7eb" 
-                    strokeWidth="8"
-                  />
-                  
-                  {/* Arco de progreso */}
-                  <circle 
-                    cx="50" 
-                    cy="50" 
-                    r="40" 
-                    fill="none" 
-                    stroke="#8b5cf6" 
-                    strokeWidth="8"
-                    strokeLinecap="round"
-                    strokeDasharray={`${tasaAprobacionPercentage * 2.513} 251.3`}
-                    strokeDashoffset="251.3"
-                    transform="rotate(-90 50 50)"
-                  />
-                </svg>
+              <div className="text-center">
+                <div className="flex items-center gap-2">
+                  <div className="bg-blue-100 p-2 rounded-lg">
+                    <Users className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <span className="text-2xl font-bold text-gray-900">{weekSummary.asistentesTotales}</span>
+                </div>
+                <p className="text-xs text-gray-600 mt-1">Asistentes</p>
               </div>
               
-              {/* Número en el centro */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl font-bold text-gray-900">{tasaAprobacionPercentage}%</span>
-                <span className="text-xs text-gray-500 mt-1">Aprobación</span>
+              <div className="text-center">
+                <div className="flex items-center gap-2">
+                  <div className="bg-blue-100 p-2 rounded-lg">
+                    <Clock className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <span className="text-2xl font-bold text-gray-900">{weekSummary.horasTotales}h</span>
+                </div>
+                <p className="text-xs text-gray-600 mt-1">Horas reservadas</p>
               </div>
-            </div>
-            
-            <div className="text-center">
-              <h3 className="font-bold text-gray-900 mb-1">Tasa de Aprobación</h3>
-              <p className="text-xs text-gray-500">{reservationStats.approved} reservas aprobadas</p>
             </div>
           </div>
         </div>
 
-        <div className={`grid gap-6 ${isSidebarCollapsed ? 'lg:grid-cols-3' : 'lg:grid-cols-3'}`}>
-          {/* Gráfico de Estado de Reservas - más pequeño */}
-          <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-4 ${
-            isSidebarCollapsed ? 'lg:col-span-2' : 'lg:col-span-2'
-          }`}>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-900">Estado de Reservas</h2>
-              <BarChart3 className="h-5 w-5 text-blue-500" />
+        {/* Gráfico y Próximas Reservas */}
+        <div className={`grid gap-6 ${isSidebarCollapsed ? 'lg:grid-cols-2' : 'lg:grid-cols-2'}`}>
+          {/* Gráfico Circular - MEJORADO */}
+          <div className="bg-white rounded-xl shadow-sm border border-blue-200 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">Distribución de reservas</h2>
+                <p className="text-sm text-slate-500">Estado actual de tus reservas</p>
+              </div>
+              <div className="flex items-center gap-1 text-sm text-blue-600">
+                <Calendar className="h-4 w-4" />
+                <span>Total: {reservationStats.total}</span>
+              </div>
             </div>
             
             {reservationStats.total > 0 ? (
-              <div className={`grid gap-4 ${isSidebarCollapsed ? 'md:grid-cols-2' : 'md:grid-cols-2'}`}>
-                {/* Gráfico circular simplificado - más pequeño */}
-                <div className="flex flex-col items-center">
-                  <div className={`relative ${isSidebarCollapsed ? 'w-40 h-40' : 'w-40 h-40'} mb-2`}>
-                    {/* Círculo de fondo */}
-                    <div className="absolute inset-0 rounded-full border-6 border-gray-200"></div>
-                    
-                    {/* Sección Aprobadas */}
-                    <div 
-                      className="absolute inset-0 rounded-full border-6 border-green-500"
-                      style={{ clipPath: `inset(0 ${100 - approvedPercentage}% 0 0)` }}
-                    ></div>
-                    
-                    {/* Sección Pendientes */}
-                    <div 
-                      className="absolute inset-0 rounded-full border-6 border-yellow-500"
-                      style={{ clipPath: `inset(0 ${100 - (approvedPercentage + pendingPercentage)}% 0 0)` }}
-                    ></div>
-                    
-                    {/* Sección Canceladas */}
-                    <div 
-                      className="absolute inset-0 rounded-full border-6 border-red-500"
-                      style={{ clipPath: `inset(0 ${100 - (approvedPercentage + pendingPercentage + cancelledPercentage)}% 0 0)` }}
-                    ></div>
-                    
-                    {/* Centro del gráfico */}
+              <div className="flex flex-col lg:flex-row items-center gap-8">
+                {/* Gráfico de dona mejorado */}
+                <div className="relative flex-shrink-0">
+                  <div className="relative">
+                    {/* Fondo del gráfico */}
                     <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-48 h-48 rounded-full bg-slate-50"></div>
+                    </div>
+                    
+                    {/* Gráfico SVG */}
+                    <svg width="200" height="200" viewBox="0 0 100 100" className="transform -rotate-90">
+                      {chartSegments.map((segment, index) => {
+                        const startAngle = segment.startAngle;
+                        const endAngle = segment.endAngle;
+                        
+                        // Convertir ángulos a coordenadas
+                        const startX = 50 + 40 * Math.cos((startAngle * Math.PI) / 180);
+                        const startY = 50 + 40 * Math.sin((startAngle * Math.PI) / 180);
+                        const endX = 50 + 40 * Math.cos((endAngle * Math.PI) / 180);
+                        const endY = 50 + 40 * Math.sin((endAngle * Math.PI) / 180);
+                        
+                        const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+                        
+                        const pathData = [
+                          `M ${startX} ${startY}`,
+                          `A 40 40 0 ${largeArcFlag} 1 ${endX} ${endY}`,
+                          `L 50 50`
+                        ].join(" ");
+                        
+                        return (
+                          <path
+                            key={index}
+                            d={pathData}
+                            fill={segment.color}
+                            stroke="white"
+                            strokeWidth="2"
+                            className="transition-all duration-300 hover:opacity-90"
+                          />
+                        );
+                      })}
+                      
+                      {/* Círculo interior */}
+                      <circle cx="50" cy="50" r="20" fill="white" />
+                    </svg>
+                    
+                    {/* Texto central mejorado */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
                       <div className="text-center">
-                        <p className="text-2xl font-bold text-gray-900">{reservationStats.total}</p>
-                        <p className="text-xs text-gray-500">Reservas</p>
+                        <span className="text-2xl font-semibold text-slate-900">{reservationStats.total}</span>
+                        <div className="text-xs text-slate-500 mt-0.5">Total</div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Leyenda - más compacta */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg">
-                    <div className="flex items-center">
-                      <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                      <span className="font-medium text-sm">Aprobadas</span>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-gray-900 text-sm">{reservationStats.approved} ({approvedPercentage}%)</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between p-2 bg-yellow-50 rounded-lg">
-                    <div className="flex items-center">
-                      <div className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></div>
-                      <span className="font-medium text-sm">En Espera</span>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-gray-900 text-sm">{reservationStats.pending} ({pendingPercentage}%)</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between p-2 bg-red-50 rounded-lg">
-                    <div className="flex items-center">
-                      <div className="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
-                      <span className="font-medium text-sm">Canceladas</span>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-gray-900 text-sm">{reservationStats.cancelled} ({cancelledPercentage}%)</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 p-2 bg-gray-50 rounded-lg">
-                    <div className="flex items-center text-xs text-gray-600">
-                      <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-                      <span>Tendencia: +15% este mes</span>
-                    </div>
+                {/* Leyenda mejorada */}
+                <div className="flex-1 min-w-0 w-full">
+                  <div className="space-y-3">
+                    {chartData.map((item, index) => (
+                      <div key={index} className="group">
+                        <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors">
+                          <div className="flex items-center flex-1 min-w-0">
+                            <div 
+                              className="w-2 h-8 rounded-full mr-3"
+                              style={{ backgroundColor: item.color }}
+                            ></div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <item.icon className="h-4 w-4" style={{ color: item.color }} />
+                                <h3 className="text-sm font-medium text-slate-900 truncate">{item.name}</h3>
+                              </div>
+                              <div className="text-xs text-slate-500 mt-1">
+                                {item.value} reserva{item.value !== 1 ? 's' : ''}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="text-right ml-2">
+                            <span className="text-base font-semibold text-slate-900">{item.percentage}%</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
             ) : (
               <div className="text-center py-8">
-                <Calendar className="h-12 w-12 text-gray-300 mx-auto mb-2" />
+                <Calendar className="h-12 w-12 text-blue-200 mx-auto mb-2" />
                 <h3 className="text-sm font-medium text-gray-900 mb-1">No hay reservas aún</h3>
-                <p className="text-gray-500 text-xs">Comienza haciendo tu primera reserva.</p>
+                <p className="text-gray-500 text-xs">Comienza haciendo tu primera reserva de espacio.</p>
               </div>
             )}
           </div>
 
-          {/* Espacios Disponibles - más compacto */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-900">Espacios</h2>
-              <MapPin className="h-5 w-5 text-blue-500" />
+          {/* Próximas Reservas - SOLO 3 */}
+          <div className="bg-white rounded-xl shadow-sm border border-blue-200 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-bold text-gray-900">Mis Próximas Reservas</h2>
+              <div className="flex items-center gap-2 text-sm text-blue-600">
+                <CalendarDays className="h-4 w-4" />
+                <span>{upcomingReservations.length} reservas</span>
+              </div>
             </div>
             
-            <div className="space-y-2">
-              {spaces.map((space, index) => (
-                <div key={index} className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className={`${space.color} p-1.5 rounded mr-3`}>
-                        {space.icon}
+            <div className="space-y-4">
+              {upcomingReservations.map((reserva) => (
+                <div key={reserva.id} className="p-4 border border-blue-100 rounded-lg hover:bg-blue-50 transition-colors">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-bold text-gray-900">{reserva.espacio}</h3>
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                          reserva.estado === 'confirmed' 
+                            ? 'bg-blue-100 text-blue-800 border border-blue-200' 
+                            : 'bg-blue-50 text-blue-700 border border-blue-100'
+                        }`}>
+                          {reserva.estado === 'confirmed' ? 'Confirmada' : 'Pendiente'}
+                        </span>
                       </div>
-                      <div>
-                        <h3 className="font-bold text-gray-900 text-sm">{space.name}</h3>
-                        <p className="text-xs text-gray-600">{space.description}</p>
-                      </div>
+                      <p className="text-sm text-gray-600">{reserva.actividad}</p>
+                      <p className="text-xs text-blue-600 mt-1">{reserva.tipoActividad}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-gray-900 text-sm">{space.capacity}</p>
-                      <p className="text-xs text-gray-500">pers.</p>
+                      <div className="text-xs text-blue-600 mb-1">{reserva.dia}</div>
+                      <div className="font-bold text-gray-900">{reserva.fecha}</div>
                     </div>
                   </div>
-                  <div className="mt-2 pt-2 border-t border-gray-100 flex items-center">
-                    <span className="text-xs font-medium px-2 py-0.5 bg-gray-100 text-gray-800 rounded">
-                      {space.type}
-                    </span>
+                  
+                  <div className="flex items-center justify-between pt-3 border-t border-blue-100">
+                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 mr-1 text-blue-500" />
+                        {reserva.hora}
+                      </div>
+                      <div className="flex items-center">
+                        <Users className="h-4 w-4 mr-1 text-blue-500" />
+                        {reserva.asistentes} asistentes
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => handleViewReservationDetails(reserva.id)}
+                      className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center"
+                    >
+                      Detalles
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </button>
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Recordatorios Importantes - ocupando todo el ancho */}
-        <div className="mt-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-900">Información Importante</h2>
-              <FileText className="h-5 w-5 text-blue-500" />
-            </div>
-            
-            <div className={`grid gap-3 ${isSidebarCollapsed ? 'md:grid-cols-3' : 'md:grid-cols-3'}`}>
-              {reminders.map((reminder, index) => (
-                <div key={index} className={`p-3 rounded-lg border ${
-                  reminder.type === 'importante' 
-                    ? 'bg-blue-50 border-blue-200' 
-                    : reminder.type === 'advertencia'
-                    ? 'bg-yellow-50 border-yellow-200'
-                    : 'bg-gray-50 border-gray-200'
-                }`}>
-                  <div className="flex items-center mb-1">
-                    <div className={`p-1 rounded mr-2 ${
-                      reminder.type === 'importante' 
-                        ? 'bg-blue-100 text-blue-600' 
-                        : reminder.type === 'advertencia'
-                        ? 'bg-yellow-100 text-yellow-600'
-                        : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {reminder.icon}
-                    </div>
-                    <h3 className="font-bold text-gray-900 text-sm">{reminder.title}</h3>
-                  </div>
-                  <p className="text-gray-600 text-xs">{reminder.message}</p>
-                </div>
-              ))}
-            </div>
-            
-            {/* Información del Sistema - más compacta */}
-            <div className="pt-3 border-t border-gray-200">
-              <div className={`grid gap-3 text-xs text-gray-600 ${
-                isSidebarCollapsed ? 'md:grid-cols-3' : 'md:grid-cols-3'
-              }`}>
-                <div>
-                  <p className="font-medium mb-1">Horario de Atención</p>
-                  <p>Lunes a Viernes<br/>8:00 a 18:00</p>
-                </div>
-                <div>
-                  <p className="font-medium mb-1">Tiempo de Aprobación</p>
-                  <p>24-48 horas<br/>para reservas</p>
-                </div>
-                <div>
-                  <p className="font-medium mb-1">Contacto Soporte</p>
-                  <p>soporte@institucion.edu.ve<br/>Ext. 1234</p>
-                </div>
+              
+              <div className="pt-4 border-t border-blue-100">
+                <button 
+                  onClick={handleViewAllReservations}
+                  className="w-full py-3 px-4 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors flex items-center justify-center"
+                >
+                  <CalendarDays className="h-4 w-4 mr-2" />
+                  Ver Historial de Reservas
+                </button>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Estadísticas Detalladas - más compactas */}
-        <div className={`grid gap-4 mt-6 ${isSidebarCollapsed ? 'md:grid-cols-3' : 'md:grid-cols-3'}`}>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-            <div className="flex items-center mb-3">
-              <div className="bg-blue-100 p-2 rounded-lg mr-3">
-                <CheckCircle className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-600">Reservas Aprobadas</p>
-                <p className="text-xl font-bold text-gray-900">{reservationStats.approved}</p>
-              </div>
-            </div>
-            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-blue-500 rounded-full"
-                style={{ width: `${approvedPercentage}%` }}
-              ></div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-            <div className="flex items-center mb-3">
-              <div className="bg-yellow-100 p-2 rounded-lg mr-3">
-                <Clock className="h-5 w-5 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-600">En Espera</p>
-                <p className="text-xl font-bold text-gray-900">{reservationStats.pending}</p>
+        {/* Estadísticas Detalladas */}
+        <div className={`grid gap-4 mt-8 ${isSidebarCollapsed ? 'md:grid-cols-4' : 'md:grid-cols-4'}`}>
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center">
+                <div className="bg-blue-100 p-1.5 rounded-lg mr-3">
+                  <CheckCircle className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900">Aprobadas</p>
+                  <p className="text-xs text-gray-600 mt-1">{reservationStats.approved} reservas</p>
+                </div>
               </div>
             </div>
-            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-yellow-500 rounded-full"
-                style={{ width: `${pendingPercentage}%` }}
-              ></div>
+            <div className="flex items-center justify-between">
+              <p className="text-2xl font-bold text-gray-900">{approvedPercentage}%</p>
+              <div className="h-2 w-20 bg-blue-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-blue-600 rounded-full"
+                  style={{ width: `${approvedPercentage}%` }}
+                ></div>
+              </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-            <div className="flex items-center mb-3">
-              <div className="bg-red-100 p-2 rounded-lg mr-3">
-                <XCircle className="h-5 w-5 text-red-600" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-600">Canceladas</p>
-                <p className="text-xl font-bold text-gray-900">{reservationStats.cancelled}</p>
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center">
+                <div className="bg-blue-100 p-1.5 rounded-lg mr-3">
+                  <Clock className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900">Pendientes</p>
+                  <p className="text-xs text-gray-600 mt-1">{reservationStats.pending} reservas</p>
+                </div>
               </div>
             </div>
-            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-red-500 rounded-full"
-                style={{ width: `${cancelledPercentage}%` }}
-              ></div>
+            <div className="flex items-center justify-between">
+              <p className="text-2xl font-bold text-gray-900">{pendingPercentage}%</p>
+              <div className="h-2 w-20 bg-blue-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-blue-500 rounded-full"
+                  style={{ width: `${pendingPercentage}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center">
+                <div className="bg-blue-100 p-1.5 rounded-lg mr-3">
+                  <XCircle className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900">Canceladas</p>
+                  <p className="text-xs text-gray-600 mt-1">{reservationStats.cancelled} reservas</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="text-2xl font-bold text-gray-900">{cancelledPercentage}%</p>
+              <div className="h-2 w-20 bg-blue-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-blue-400 rounded-full"
+                  style={{ width: `${cancelledPercentage}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center">
+                <div className="bg-blue-100 p-1.5 rounded-lg mr-3">
+                  <TrendingUp className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900">Tendencia</p>
+                  <p className="text-xs text-gray-600 mt-1">Último mes</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="text-2xl font-bold text-green-600">+15%</p>
+              <div className="h-2 w-20 bg-blue-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-green-500 rounded-full"
+                  style={{ width: `75%` }}
+                ></div>
+              </div>
             </div>
           </div>
         </div>

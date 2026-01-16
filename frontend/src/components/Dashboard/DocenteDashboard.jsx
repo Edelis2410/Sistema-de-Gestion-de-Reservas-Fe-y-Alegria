@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Header from './Header';
 import Sidebar from './Sidebar';
@@ -10,6 +10,15 @@ import Espacios from './Espacios';
 import CrearReserva from './Reservasd/CrearReserva';
 import HistorialReservas from './Reservasd/HistorialReservas';
 import EstadosReserva from './Reservasd/EstadosReserva';
+
+// Importa el componente de Configuración
+import Configuracion from './Configuracion';
+
+// Importa el componente de Mi Cuenta
+import MiCuenta from './MiCuenta';
+
+// Importa el componente de Ayuda
+import Help from './Help';
 
 const DocenteDashboard = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -54,8 +63,8 @@ const DocenteDashboard = () => {
           isSidebarCollapsed={isSidebarCollapsed} 
         />
         
-        {/* Contenido con padding superior para el header */}
-        <div className="pt-16">
+        {/* Contenido con padding superior reducido para que aparezca más arriba */}
+        <div className="pt-12">
           <div className="p-4 md:p-6">
             <Routes>
               {/* Ruta por defecto redirige a /docente/inicio */}
@@ -90,27 +99,18 @@ const DocenteDashboard = () => {
               } />
               
               {/* Ruta para Configuración */}
-              <Route path="settings" element={
-                <div className="p-6">
-                  <h1 className="text-2xl font-bold text-gray-900">Configuración</h1>
-                  <p className="text-gray-600">Página de configuración en desarrollo.</p>
-                </div>
+              <Route path="configuracion" element={
+                <Configuracion />
               } />
               
               {/* Ruta para Mi Cuenta */}
               <Route path="account" element={
-                <div className="p-6">
-                  <h1 className="text-2xl font-bold text-gray-900">Mi Cuenta</h1>
-                  <p className="text-gray-600">Página de mi cuenta en desarrollo.</p>
-                </div>
+                <MiCuenta />
               } />
               
-              {/* Ruta para Ayuda */}
+              {/* Ruta para Ayuda - ACTUALIZADA con el componente Help */}
               <Route path="help" element={
-                <div className="p-6">
-                  <h1 className="text-2xl font-bold text-gray-900">Ayuda</h1>
-                  <p className="text-gray-600">Página de ayuda en desarrollo.</p>
-                </div>
+                <Help />
               } />
               
               {/* Ruta para cualquier otra ruta no definida - muestra error 404 */}

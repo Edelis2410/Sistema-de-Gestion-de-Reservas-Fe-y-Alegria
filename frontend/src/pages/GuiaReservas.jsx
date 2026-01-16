@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import { BookOpen, Calendar, Clock, Mail, CheckCircle, AlertCircle, FileText, Download, Video, MessageCircle } from 'lucide-react';
 
-// Importar imagen de fondo
-import heroBackgroundImage from '../assets/images/min.png';
-
 const GuiaReservas = () => {
   const [activeSection, setActiveSection] = useState('introduccion');
 
@@ -45,12 +42,12 @@ const GuiaReservas = () => {
               Este sistema está diseñado para facilitar la gestión y administración de los espacios educativos 
               en el Colegio Fe y Alegría, Puerto Ordaz.
             </p>
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+            <div className="bg-primary-50 border border-primary-200 rounded-xl p-6">
               <div className="flex items-start">
-                <AlertCircle className="w-6 h-6 text-blue-600 mr-3 flex-shrink-0 mt-1" />
+                <AlertCircle className="w-6 h-6 text-primary-600 mr-3 flex-shrink-0 mt-1" />
                 <div>
-                  <h3 className="font-semibold text-blue-800 mb-2">Importante</h3>
-                  <p className="text-blue-700">
+                  <h3 className="font-semibold text-primary-800 mb-2">Importante</h3>
+                  <p className="text-primary-700">
                     Para garantizar el uso óptimo de los espacios, todas las reservas deben seguir el proceso 
                     establecido y respetar las políticas de uso.
                   </p>
@@ -106,7 +103,7 @@ const GuiaReservas = () => {
                 {
                   paso: 4,
                   titulo: "Completa el formulario",
-                  descripcion: "Ingresa los detalles de tu evento: nombre, descripción, cantidad de personas, equipo necesario."
+                  descripcion: "Ingresa los detalles de tu evento: fecha, nombre del actividad, horario, espacio."
                 },
                 {
                   paso: 5,
@@ -263,25 +260,11 @@ const GuiaReservas = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section CON IMAGEN DE FONDO */}
-      <div 
-        className="text-white py-12 relative"
-        style={{
-          backgroundImage: `url(${heroBackgroundImage})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        }}
-      >
-        {/* Overlay para mejor legibilidad */}
-        <div className="absolute inset-0 bg-primary-600/20"></div>
-        
-        <div className="relative max-w-7xl mx-auto px-4">
-          <div className="flex items-center mb-6">
-            <BookOpen className="w-12 h-12 mr-4" />
-            <h1 className="text-4xl md:text-5xl font-bold">Guía de Reservas</h1>
-          </div>
-          <p className="text-xl text-white/90 max-w-3xl">
+      {/* Hero Section - Sin color */}
+      <div className="py-12">
+        <div className="max-w-7xl mx-auto px-4">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900">Guía de Reservas</h1>
+          <p className="text-xl text-gray-600 max-w-3xl mt-4">
             Todo lo que necesitas saber para utilizar el sistema de gestión de espacios educativos
           </p>
         </div>

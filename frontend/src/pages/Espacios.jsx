@@ -1,29 +1,23 @@
 import React, { useState, useMemo } from 'react';
 import { Search, Users, Calendar, Clock, MapPin, Filter, ChevronRight, Library, BookOpen, Cross, ArrowRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom'; // Importar useNavigate
+import { useNavigate } from 'react-router-dom';
 
 // Importar imágenes para los espacios
 import cerpaImage from '../assets/images/cerpa.png';
 import sacramentoImage from '../assets/images/sacramento.png';
 import salonMultipleImage from '../assets/images/salon-multiple.png';
 import capillaImage from '../assets/images/capilla.png';
-import heroBackgroundImage from '../assets/images/min.png';
 
 const Espacios = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('todos');
-  const navigate = useNavigate(); // Inicializar useNavigate
+  const navigate = useNavigate();
 
-  // Función para manejar el clic en el botón de reservar
   const handleReservarClick = (espacioNombre) => {
-    // Guardar en localStorage o estado global el espacio seleccionado
     localStorage.setItem('selectedSpace', espacioNombre);
-    
-    // Redirigir al login
     navigate('/login');
   };
 
-  // Definir espacios en orden alfabético por nombre, igual que en el Home
   const espacios = useMemo(() => [
     {
       id: 4,
@@ -92,29 +86,16 @@ const Espacios = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section con imagen de fondo */}
-      <div 
-        className="text-white py-16 relative"
-        style={{
-          backgroundImage: `url(${heroBackgroundImage})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        }}
-      >
-        {/* Overlay para mejor legibilidad */}
-        <div className="absolute inset-0 bg-primary-600/20"></div>
-        
-        <div className="relative max-w-7xl mx-auto px-4">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">Espacios Educativos</h1>
-          <p className="text-xl text-white/90 max-w-3xl">
+      {/* Contenido Principal */}
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        {/* Encabezado sin imagen de fondo */}
+        <div className="mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6">Espacios Educativos</h1>
+          <p className="text-xl text-gray-600 max-w-3xl">
             Descubre y reserva los espacios disponibles en el Colegio Fe y Alegría
           </p>
         </div>
-      </div>
 
-      {/* Contenido Principal */}
-      <div className="max-w-7xl mx-auto px-4 py-12">
         {/* Barra de búsqueda y filtros */}
         <div className="mb-12">
           <div className="flex flex-col lg:flex-row gap-6">
@@ -125,7 +106,7 @@ const Espacios = () => {
                 <input
                   type="text"
                   placeholder="Buscar espacios por nombre o descripción..."
-                  className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -137,7 +118,7 @@ const Espacios = () => {
               <div className="relative">
                 <Filter className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <select
-                  className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none bg-white"
+                  className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
                 >
@@ -156,7 +137,7 @@ const Espacios = () => {
           </div>
         </div>
 
-        {/* Grid de espacios - MÁS GRUESAS COMO EN GUÍA DE RESERVAS */}
+        {/* Grid de espacios */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {espaciosFiltrados.map((espacio) => (
             <div
@@ -184,7 +165,7 @@ const Espacios = () => {
                 </div>
               </div>
               
-              {/* Información del espacio - MÁS GRUESA (p-6 como en Guía) */}
+              {/* Información del espacio */}
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <div>
@@ -224,7 +205,7 @@ const Espacios = () => {
           </div>
         )}
 
-        {/* Información adicional - IGUAL QUE EN GUÍA */}
+        {/* Información adicional */}
         <div className="mt-12 p-8 bg-gradient-to-r from-blue-50 to-white rounded-xl border border-blue-100">
           <h2 className="text-xl font-bold text-gray-900 mb-4">¿Cómo reservar un espacio?</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
