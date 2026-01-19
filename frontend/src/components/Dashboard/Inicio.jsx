@@ -1,17 +1,13 @@
-// components/dashboard/Inicio.jsx (refactorizado)
-import React, { useState } from 'react';
+// src/components/Dashboard/Inicio.jsx
+import React from 'react';
 import { Plus, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button } from '../common/UI/Button';
 import { MiniCalendar } from '../common/Calendar/MiniCalendar';
 import { ReservationCard } from '../common/Reservas/ReservationCard';
 import { ReservationsSummary } from '../common/Reservas/ReservationsSummary';
-import { SectionHeader } from '../common/Layout/SectionHeader';
 
 const Inicio = ({ user, isSidebarCollapsed }) => {
-  // Estado compartido
-  const [selectedDate, setSelectedDate] = useState(new Date(2026, 0, 9));
-  
-  // Datos - ahora podrían venir de una API
+  // Datos de ejemplo (en producción vendrían de una API)
   const pendingReservations = [
     {
       id: 1,
@@ -91,22 +87,24 @@ const Inicio = ({ user, isSidebarCollapsed }) => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Minicalendario */}
+          {/* Minicalendario - solo lectura */}
           <div className="lg:col-span-2">
             <MiniCalendar 
-              currentDate={new Date(2026, 0, 1)}
-              onDateSelect={setSelectedDate}
+              currentDate={new Date(2026, 0, 1)} // Enero 2026
               highlightedDates={highlightedDates}
+              // No pasamos onDateSelect porque es de solo lectura
             />
           </div>
 
           {/* Sección de reservas pendientes */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-            <SectionHeader 
-              title="Reservas pendientes"
-              subtitle="Requieren confirmación"
-              icon={AlertCircle}
-            />
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">Reservas pendientes</h2>
+                <p className="text-sm text-slate-500">Requieren confirmación</p>
+              </div>
+              <AlertCircle className="h-5 w-5 text-yellow-600" />
+            </div>
 
             {pendingReservations.length > 0 ? (
               <div className="space-y-4">
@@ -147,11 +145,13 @@ const Inicio = ({ user, isSidebarCollapsed }) => {
         {/* Sección de reservas confirmadas */}
         <div className="mt-6">
           <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <SectionHeader 
-              title="Reservas confirmadas"
-              subtitle="Espacios reservados para este mes"
-              icon={CheckCircle}
-            />
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">Reservas confirmadas</h2>
+                <p className="text-sm text-slate-500">Espacios reservados para este mes</p>
+              </div>
+              <CheckCircle className="h-5 w-5 text-blue-600" />
+            </div>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
               {confirmedReservations.map((reservation) => (
                 <ReservationCard

@@ -1,4 +1,4 @@
-// components/common/Calendar/MiniCalendar.jsx
+// src/components/common/Calendar/MiniCalendar.jsx
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { CalendarDay } from '../UI/CalendarDay';
@@ -6,12 +6,10 @@ import { Button } from '../UI/Button';
 
 export const MiniCalendar = ({ 
   currentDate = new Date(),
-  onDateSelect,
-  highlightedDates = [], // Array de objetos: { date, type: 'confirmed' | 'pending' }
+  highlightedDates = [],
   showTooltips = true
 }) => {
   const [currentMonth, setCurrentMonth] = useState(currentDate);
-  const [selectedDate, setSelectedDate] = useState(currentDate);
 
   const monthNames = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -39,11 +37,6 @@ export const MiniCalendar = ({
       days.push(new Date(year, month, i));
     }
     return days;
-  };
-
-  const handleDateClick = (date) => {
-    setSelectedDate(date);
-    onDateSelect?.(date);
   };
 
   const prevMonth = () => {
@@ -109,13 +102,12 @@ export const MiniCalendar = ({
         ))}
       </div>
 
-      {/* Días del mes */}
+      {/* Días del mes - ahora de solo lectura */}
       <div className="grid grid-cols-7 gap-1">
         {calendarDays.map((date, index) => {
           const { hasConfirmed, hasPending } = getDateStatus(date);
           const isCurrentMonth = date && date.getMonth() === currentMonth.getMonth();
           const isToday = date && isSameDay(date, new Date());
-          const isSelected = date && isSameDay(date, selectedDate);
 
           return (
             <CalendarDay
@@ -125,8 +117,7 @@ export const MiniCalendar = ({
               isCurrentMonth={isCurrentMonth}
               hasConfirmed={hasConfirmed}
               hasPending={hasPending}
-              isSelected={isSelected}
-              onClick={handleDateClick}
+              // Se quitó: isSelected y onClick
             />
           );
         })}

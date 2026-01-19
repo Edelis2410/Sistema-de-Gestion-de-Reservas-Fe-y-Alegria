@@ -119,29 +119,42 @@ const Configuracion = () => {
               </div>
 
               <div className="space-y-3 p-5">
-                {/* Idioma - Con interruptor */}
-                <div className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-4 py-3 hover:bg-slate-100">
-                  <div className="flex items-center gap-3">
+                {/* Idioma - Con opciones de selección */}
+                <div className="rounded-lg border border-slate-100 bg-slate-50 px-4 py-3 hover:bg-slate-100">
+                  <div className="flex items-center gap-3 mb-2">
                     <div className="rounded-full bg-white p-2 shadow-sm">
                       <Globe className="h-4 w-4 text-blue-600" />
                     </div>
                     <div>
                       <p className="text-sm font-medium text-slate-900">Idioma del sistema</p>
-                      <p className="text-xs text-slate-500">
-                        {preferencias.idioma === 'es' ? 'Español' : 'English'}
-                      </p>
                     </div>
                   </div>
 
-                  <label className="relative inline-flex cursor-pointer items-center">
-                    <input
-                      type="checkbox"
-                      className="peer sr-only"
-                      checked={preferencias.idioma === 'es'}
-                      onChange={(e) => handlePreferenciaChange('idioma', e.target.checked ? 'es' : 'en')}
-                    />
-                    <div className="peer h-6 w-11 rounded-full bg-slate-300 transition-all duration-300 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-slate-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-5 peer-checked:after:border-white peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300" />
-                  </label>
+                  <div className="flex items-center gap-6 ml-12">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="idioma"
+                        value="es"
+                        checked={preferencias.idioma === 'es'}
+                        onChange={(e) => handlePreferenciaChange('idioma', e.target.value)}
+                        className="h-4 w-4 text-blue-600 border-slate-300 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-slate-700">Español</span>
+                    </label>
+                    
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="idioma"
+                        value="en"
+                        checked={preferencias.idioma === 'en'}
+                        onChange={(e) => handlePreferenciaChange('idioma', e.target.value)}
+                        className="h-4 w-4 text-blue-600 border-slate-300 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-slate-700">English</span>
+                    </label>
+                  </div>
                 </div>
 
                 {/* Tema de la interfaz - Con interruptor */}

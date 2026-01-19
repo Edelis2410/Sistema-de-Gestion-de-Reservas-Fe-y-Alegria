@@ -22,26 +22,36 @@ import Help from './Help';
 
 const DocenteDashboard = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [user, setUser] = useState(null);
   
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    console.log('Dashboard - Usuario:', user);
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+    console.log('Dashboard - Usuario cargado:', storedUser);
     
-    if (!user) {
-      console.log('No hay usuario, redirigiendo...');
+    if (!storedUser) {
+      console.log('No hay usuario, redirigiendo a login...');
       window.location.href = '/login';
+    } else {
+      setUser(storedUser);
     }
   }, []);
 
-  const user = JSON.parse(localStorage.getItem('user')) || { 
+  const defaultUser = { 
     name: 'Usuario', 
     lastName: 'Docente',
     role: 'docente',
     email: 'correo@institucion.edu.ve'
   };
 
+  const currentUser = user || defaultUser;
+
   const toggleSidebar = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    window.location.href = '/login';
   };
 
   return (
@@ -59,8 +69,9 @@ const DocenteDashboard = () => {
         
         {/* Header fijo en la parte superior */}
         <Header 
-          user={user} 
-          isSidebarCollapsed={isSidebarCollapsed} 
+          user={currentUser} 
+          isSidebarCollapsed={isSidebarCollapsed}
+          onLogout={handleLogout}
         />
         
         {/* Contenido con padding superior reducido para que aparezca más arriba */}
@@ -72,45 +83,45 @@ const DocenteDashboard = () => {
               
               {/* Ruta de Inicio */}
               <Route path="inicio" element={
-                <Inicio user={user} isSidebarCollapsed={isSidebarCollapsed} />
+                <Inicio user={currentUser} isSidebarCollapsed={isSidebarCollapsed} />
               } />
               
               {/* Ruta del Dashboard */}
               <Route path="dashboard" element={
-                <Dashboard user={user} isSidebarCollapsed={isSidebarCollapsed} />
+                <Dashboard user={currentUser} isSidebarCollapsed={isSidebarCollapsed} />
               } />
               
               {/* Ruta de Espacios */}
               <Route path="espacios" element={
-                <Espacios user={user} isSidebarCollapsed={isSidebarCollapsed} />
+                <Espacios user={currentUser} isSidebarCollapsed={isSidebarCollapsed} />
               } />
               
               {/* Rutas de Reservas */}
               <Route path="reservas/crear" element={
-                <CrearReserva user={user} isSidebarCollapsed={isSidebarCollapsed} />
+                <CrearReserva user={currentUser} isSidebarCollapsed={isSidebarCollapsed} />
               } />
               
               <Route path="reservas/historial" element={
-                <HistorialReservas user={user} isSidebarCollapsed={isSidebarCollapsed} />
+                <HistorialReservas user={currentUser} isSidebarCollapsed={isSidebarCollapsed} />
               } />
               
               <Route path="reservas/estados" element={
-                <EstadosReserva user={user} isSidebarCollapsed={isSidebarCollapsed} />
+                <EstadosReserva user={currentUser} isSidebarCollapsed={isSidebarCollapsed} />
               } />
               
               {/* Ruta para Configuración */}
               <Route path="configuracion" element={
-                <Configuracion />
+                <Configuracion user={currentUser} />
               } />
               
               {/* Ruta para Mi Cuenta */}
               <Route path="account" element={
-                <MiCuenta />
+                <MiCuenta user={currentUser} />
               } />
               
-              {/* Ruta para Ayuda - ACTUALIZADA con el componente Help */}
+              {/* Ruta para Ayuda */}
               <Route path="help" element={
-                <Help />
+                <Help user={currentUser} />
               } />
               
               {/* Ruta para cualquier otra ruta no definida - muestra error 404 */}

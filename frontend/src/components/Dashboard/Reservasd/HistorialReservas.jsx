@@ -9,7 +9,9 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  X,
+  Save
 } from 'lucide-react';
 
 const HistorialReservas = () => {
@@ -17,6 +19,21 @@ const HistorialReservas = () => {
   const [filterStatus, setFilterStatus] = useState('');
   const [reservas, setReservas] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Estados para los modales
+  const [showDetallesModal, setShowDetallesModal] = useState(false);
+  const [showEditarModal, setShowEditarModal] = useState(false);
+  const [showCancelarModal, setShowCancelarModal] = useState(false);
+  const [reservaSeleccionada, setReservaSeleccionada] = useState(null);
+  
+  // Estado para los datos de edición
+  const [edicionData, setEdicionData] = useState({
+    fecha: '',
+    horaInicio: '',
+    horaFin: '',
+    espacio: '',
+    motivo: ''
+  });
 
   // Espacios disponibles del colegio - estos deben coincidir con CrearReserva
   const espaciosDisponibles = [
@@ -34,12 +51,8 @@ const HistorialReservas = () => {
   const loadReservations = () => {
     try {
       setLoading(true);
-      // Obtener reservas del localStorage
       const storedReservations = JSON.parse(localStorage.getItem('reservas')) || [];
-      
-      // Ordenar por fecha de creación (ID descendente) para mostrar las más recientes primero
-      const sortedReservations = [...storedReservations].sort((a, b) => b.id - a.id);
-      
+      const sortedReservations = [...storedReservations].sort((a, b) => a.id - b.id);
       setReservas(sortedReservations);
     } catch (error) {
       console.error('Error al cargar reservas:', error);
@@ -57,15 +70,13 @@ const HistorialReservas = () => {
     { value: 'cancelada', label: 'Cancelada', color: 'bg-gray-100 text-gray-800', icon: <AlertCircle className="h-3 w-3" /> },
   ];
 
-  // Función para obtener el nombre del espacio por ID
+  const obtenerInfoEspacio = (idEspacio) => {
+    return espaciosDisponibles.find(e => e.id === idEspacio) || { nombre: 'Desconocido', capacidad: 0, tipo: '' };
+  };
+
   const obtenerNombreEspacio = (idEspacio) => {
     const espacio = espaciosDisponibles.find(e => e.id === idEspacio);
     return espacio ? espacio.nombre : 'Espacio no encontrado';
-  };
-
-  // Función para obtener la información completa del espacio
-  const obtenerInfoEspacio = (idEspacio) => {
-    return espaciosDisponibles.find(e => e.id === idEspacio) || { nombre: 'Desconocido', capacidad: 0, tipo: '' };
   };
 
   const filteredReservas = reservas.filter(reserva => {
@@ -87,50 +98,75 @@ const HistorialReservas = () => {
     return estadoObj ? estadoObj.icon : <Clock className="h-3 w-3" />;
   };
 
+  // Modal: Ver Detalles
   const handleViewDetails = (id) => {
     const reserva = reservas.find(r => r.id === id);
     if (reserva) {
-      const espacioInfo = obtenerInfoEspacio(reserva.espacio);
-      const fechaReserva = new Date(reserva.fecha);
-      const fechaSolicitud = new Date(reserva.fechaSolicitud);
-      
-      alert(
-        `📋 DETALLES DE LA RESERVA\n\n` +
-        `ID: #${reserva.id.toString().padStart(3, '0')}\n` +
-        `Espacio: ${espacioInfo.nombre}\n` +
-        `Ubicación: ${espacioInfo.tipo}\n` +
-        `Capacidad: ${espacioInfo.capacidad} personas\n` +
-        `Fecha: ${fechaReserva.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}\n` +
-        `Horario: ${reserva.horaInicio} - ${reserva.horaFin}\n` +
-        `Motivo: ${reserva.motivo}\n` +
-        `Participantes: ${reserva.participantes || 1}\n` +
-        `Estado: ${reserva.estado.toUpperCase()}\n` +
-        `Descripción: ${reserva.descripcion || 'Sin descripción adicional'}\n` +
-        `Fecha de Solicitud: ${fechaSolicitud.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}`
-      );
+      setReservaSeleccionada(reserva);
+      setShowDetallesModal(true);
     }
   };
 
+  // Modal: Editar
   const handleEditReserva = (id) => {
-    console.log(`Editar reserva ${id}`);
-    alert('Función de edición en desarrollo');
+    const reserva = reservas.find(r => r.id === id);
+    if (reserva) {
+      setReservaSeleccionada(reserva);
+      // Preparar datos para edición
+      setEdicionData({
+        fecha: reserva.fecha,
+        horaInicio: reserva.horaInicio,
+        horaFin: reserva.horaFin,
+        espacio: reserva.espacio,
+        motivo: reserva.motivo
+      });
+      setShowEditarModal(true);
+    }
   };
 
-  const handleDeleteReserva = (id) => {
-    if (window.confirm('¿Estás seguro de que deseas cancelar esta reserva?')) {
-      try {
-        // Filtrar la reserva a eliminar
-        const updatedReservas = reservas.filter(reserva => reserva.id !== id);
-        
-        // Actualizar estado y localStorage
-        setReservas(updatedReservas);
-        localStorage.setItem('reservas', JSON.stringify(updatedReservas));
-        
-        alert('Reserva cancelada exitosamente');
-      } catch (error) {
-        console.error('Error al cancelar reserva:', error);
-        alert('Error al cancelar la reserva');
-      }
+  // Guardar cambios de edición
+  const handleSaveEdit = () => {
+    try {
+      const updatedReservas = reservas.map(reserva => {
+        if (reserva.id === reservaSeleccionada.id) {
+          return {
+            ...reserva,
+            ...edicionData
+          };
+        }
+        return reserva;
+      });
+      
+      setReservas(updatedReservas);
+      localStorage.setItem('reservas', JSON.stringify(updatedReservas));
+      setShowEditarModal(false);
+      alert('Reserva actualizada exitosamente');
+    } catch (error) {
+      console.error('Error al actualizar reserva:', error);
+      alert('Error al actualizar la reserva');
+    }
+  };
+
+  // Modal: Cancelar
+  const handleDeleteClick = (id) => {
+    const reserva = reservas.find(r => r.id === id);
+    if (reserva) {
+      setReservaSeleccionada(reserva);
+      setShowCancelarModal(true);
+    }
+  };
+
+  // Confirmar cancelación
+  const confirmDeleteReserva = () => {
+    try {
+      const updatedReservas = reservas.filter(reserva => reserva.id !== reservaSeleccionada.id);
+      setReservas(updatedReservas);
+      localStorage.setItem('reservas', JSON.stringify(updatedReservas));
+      setShowCancelarModal(false);
+      alert('Reserva cancelada exitosamente');
+    } catch (error) {
+      console.error('Error al cancelar reserva:', error);
+      alert('Error al cancelar la reserva');
     }
   };
 
@@ -144,6 +180,13 @@ const HistorialReservas = () => {
     });
   };
 
+  // Convertir fecha para input type="date"
+  const formatFechaForInput = (fecha) => {
+    if (!fecha) return '';
+    const date = new Date(fecha);
+    return date.toISOString().split('T')[0];
+  };
+
   return (
     <div className="p-6">
       {/* Encabezado con barra de búsqueda y filtro a la derecha */}
@@ -155,7 +198,6 @@ const HistorialReservas = () => {
           </div>
           
           <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4">
-            {/* Barra de búsqueda con bordes ovalados - AÚN MÁS LARGA */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
@@ -167,7 +209,6 @@ const HistorialReservas = () => {
               />
             </div>
             
-            {/* Filtro por estado */}
             <div className="flex items-center space-x-2">
               <Filter className="h-4 w-4 text-gray-500" />
               <select
@@ -225,7 +266,7 @@ const HistorialReservas = () => {
                     return (
                       <tr key={reserva.id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          #{reserva.id.toString().padStart(3, '0')}
+                          #{reserva.id.toString().padStart(2, '0')}
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm font-medium text-gray-900">{espacioInfo.nombre}</div>
@@ -280,7 +321,7 @@ const HistorialReservas = () => {
                               <Edit className="h-4 w-4" />
                             </button>
                             <button 
-                              onClick={() => handleDeleteReserva(reserva.id)}
+                              onClick={() => handleDeleteClick(reserva.id)}
                               className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
                               title="Cancelar"
                               disabled={reserva.estado === 'rechazada' || reserva.estado === 'cancelada'}
@@ -316,6 +357,211 @@ const HistorialReservas = () => {
           Las reservas se guardan localmente en tu navegador.
         </p>
       </div>
+
+      {/* Modal: Ver Detalles */}
+      {showDetallesModal && reservaSeleccionada && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-lg max-w-md w-full">
+            <div className="flex justify-between items-center p-6 border-b">
+              <h3 className="text-xl font-semibold text-gray-800">Detalles de la Reserva</h3>
+              <button
+                onClick={() => setShowDetallesModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div>
+                <h4 className="text-sm font-medium text-gray-500 mb-1">ID</h4>
+                <p className="text-lg font-semibold">#{reservaSeleccionada.id.toString().padStart(2, '0')}</p>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-medium text-gray-500 mb-1">Espacio</h4>
+                <p className="text-gray-800">{obtenerNombreEspacio(reservaSeleccionada.espacio)}</p>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-medium text-gray-500 mb-1">Fecha</h4>
+                <p className="text-gray-800">{formatFecha(reservaSeleccionada.fecha)}</p>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-medium text-gray-500 mb-1">Horario</h4>
+                <p className="text-gray-800">{reservaSeleccionada.horaInicio} - {reservaSeleccionada.horaFin}</p>
+              </div>
+              
+              <div>
+                <h4 className="text-sm font-medium text-gray-500 mb-1">Título/Motivo</h4>
+                <p className="text-gray-800">{reservaSeleccionada.motivo}</p>
+              </div>
+            </div>
+            
+            <div className="p-6 border-t">
+              <button
+                onClick={() => setShowDetallesModal(false)}
+                className="w-full py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Editar Reserva */}
+      {showEditarModal && reservaSeleccionada && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-lg max-w-md w-full">
+            <div className="flex justify-between items-center p-6 border-b">
+              <h3 className="text-xl font-semibold text-gray-800">Editar Reserva</h3>
+              <button
+                onClick={() => setShowEditarModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Espacio
+                </label>
+                <select
+                  value={edicionData.espacio}
+                  onChange={(e) => setEdicionData({...edicionData, espacio: parseInt(e.target.value)})}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  {espaciosDisponibles.map(espacio => (
+                    <option key={espacio.id} value={espacio.id}>
+                      {espacio.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Fecha
+                </label>
+                <input
+                  type="date"
+                  value={formatFechaForInput(edicionData.fecha)}
+                  onChange={(e) => setEdicionData({...edicionData, fecha: e.target.value})}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Hora Inicio
+                  </label>
+                  <input
+                    type="time"
+                    value={edicionData.horaInicio}
+                    onChange={(e) => setEdicionData({...edicionData, horaInicio: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Hora Fin
+                  </label>
+                  <input
+                    type="time"
+                    value={edicionData.horaFin}
+                    onChange={(e) => setEdicionData({...edicionData, horaFin: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Título/Motivo
+                </label>
+                <input
+                  type="text"
+                  value={edicionData.motivo}
+                  onChange={(e) => setEdicionData({...edicionData, motivo: e.target.value})}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Ingrese el motivo de la reserva"
+                />
+              </div>
+            </div>
+            
+            <div className="p-6 border-t flex space-x-3">
+              <button
+                onClick={() => setShowEditarModal(false)}
+                className="flex-1 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                className="flex-1 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Guardar Cambios
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Cancelar Reserva */}
+      {showCancelarModal && reservaSeleccionada && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-lg max-w-md w-full">
+            <div className="flex justify-between items-center p-6 border-b">
+              <h3 className="text-xl font-semibold text-gray-800">Cancelar Reserva</h3>
+              <button
+                onClick={() => setShowCancelarModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <div className="flex items-center justify-center mb-6">
+                <AlertCircle className="h-16 w-16 text-red-500" />
+              </div>
+              
+              <p className="text-center text-gray-700 mb-2">
+                ¿Estás seguro de que deseas cancelar la reserva?
+              </p>
+              
+              <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                <p className="font-medium text-gray-800">#{reservaSeleccionada.id.toString().padStart(2, '0')} - {reservaSeleccionada.motivo}</p>
+                <p className="text-sm text-gray-600 mt-1">
+                  {obtenerNombreEspacio(reservaSeleccionada.espacio)} • {formatFecha(reservaSeleccionada.fecha)}
+                </p>
+              </div>
+              
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowCancelarModal(false)}
+                  className="flex-1 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  No, mantener
+                </button>
+                <button
+                  onClick={confirmDeleteReserva}
+                  className="flex-1 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Sí, cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
