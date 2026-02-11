@@ -52,9 +52,15 @@ export const ReservationCard = ({
       <div className="mb-4 flex items-center text-sm text-slate-600">
         <Calendar className="mr-2 h-4 w-4 text-slate-500" />
         <span>
-          {new Date(date).toLocaleDateString('es-ES')} • {time}
+         {/* Si 'date' ya contiene una "/" (como "15/02/2026"), lo mostramos tal cual.
+           Si no, lo tratamos como un objeto Date.
+         */}
+         {typeof date === 'string' && date.includes('/') 
+           ? date 
+           :new Date(date).toLocaleDateString('es-ES')
+         } • {time}
         </span>
-      </div>
+     </div>
 
       {isAdmin && isPending && (
         <div className="mb-4 p-3 bg-yellow-100 border border-yellow-200 rounded">

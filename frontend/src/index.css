@@ -76,3 +76,34 @@ input[type="password"]::-ms-reveal,
 input[type="password"]::-ms-clear {
   display: none !important;
 }
+
+/* =============================================== */
+/* ESTILOS PARA SCROLLBAR DEL SIDEBAR     */
+/* =============================================== */
+
+/* Contenedor del scroll */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px; /* Un poco más fino para que sea elegante */
+}
+
+/* El fondo del scroll (la pista) */
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #111827; /* Coincide con el gray-900 del sidebar */
+}
+
+/* La barrita que se mueve */
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #374151; /* gray-700 */
+  border-radius: 10px;
+}
+
+/* Cuando pasas el mouse por la barrita */
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #4B5563; /* gray-600 */
+}
+
+/* Soporte para Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #374151 #111825;
+}

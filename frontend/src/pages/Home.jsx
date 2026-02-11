@@ -6,10 +6,10 @@ import { Calendar, Clock, Shield, Bell, CheckCircle, ArrowRight, Users, BarChart
 import fondoImage from '../assets/images/fondofinal.png';
 
 // Importar las imágenes de los espacios
-import cerpaImage from '../assets/images/cerpa.png';
-import sacramentoImage from '../assets/images/sacramento.png';
-import salonMultipleImage from '../assets/images/salon-multiple.png';
-import capillaImage from '../assets/images/capilla.png';
+import cerpaImage from '../assets/images/biblioteca_.png';
+import sacramentoImage from '../assets/images/sacramento_.png';
+import salonMultipleImage from '../assets/images/salon_multiple.png';
+import capillaImage from '../assets/images/capilla_.png';
 
 const Home = () => {
   const navigate = useNavigate();

@@ -4,7 +4,7 @@ import React from 'react';
 export const ReservationsSummary = ({ 
   confirmed = 0, 
   pending = 0, 
-  cancelled = 0,
+  cancelled = 0, // Seguimos recibiendo 'cancelled' por compatibilidad con el componente padre
   showTitle = true 
 }) => {
   return (
@@ -21,9 +21,10 @@ export const ReservationsSummary = ({
           <div className="text-xl font-semibold">{pending}</div>
           <div className="text-xs">Pendientes</div>
         </div>
-        <div className="text-slate-500">
+        {/* Cambiamos text-slate-500 por text-red-500 para las rechazadas */}
+        <div className="text-red-500"> 
           <div className="text-xl font-semibold">{cancelled}</div>
-          <div className="text-xs">Canceladas</div>
+          <div className="text-xs">Rechazadas</div>
         </div>
       </div>
     </div>

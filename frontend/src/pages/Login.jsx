@@ -1,15 +1,22 @@
 import React, { useState } from 'react';
 import { LogIn, Lock, Mail, User, Shield, Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { saveAuthData } from '../utils/auth';
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    role: 'docente'
+    role: 'docente' // Esto ahora se enviará al backend
   });
 
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -17,40 +24,73 @@ const Login = () => {
       ...prev,
       [name]: value
     }));
+    setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
     
-    // Simulamos una petición al servidor
-    setTimeout(() => {
-      console.log('Datos de login:', formData);
-      setIsLoading(false);
-      
-      // Datos simulados del usuario
-      const userData = {
-        name: formData.role === 'docente' ? 'Juan' : 'Admin',
-        lastName: formData.role === 'docente' ? 'Pérez' : 'Sistema',
-        email: formData.email,
-        role: formData.role
-      };
-      
-      // Guardar en localStorage
-      localStorage.setItem('user', JSON.stringify(userData));
-      console.log('Usuario guardado en localStorage:', userData);
-      
-      // 🔥 REDIRECCIÓN DIRECTA - ESTO SIEMPRE FUNCIONA 🔥
-      if (formData.role === 'docente') {
-        window.location.href = '/docente'; // Redirección directa
-      } else if (formData.role === 'admin') {
-        window.location.href = '/admin';
+    if (!formData.email || !formData.password) {
+      setError('Por favor, complete todos los campos');
+      return;
+    }
+    
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch('http://localhost:5000/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          rolSeleccionado: formData.role
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Credenciales incorrectas');
       }
-    }, 1500);
+
+      // --- PERSISTENCIA CORREGIDA PARA LAS NOTIFICACIONES ---
+      // Guardamos explícitamente el token y el usuario para que el Header los reconozca
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('userRole', data.user.rol); 
+      
+      // Llamada a tu utilidad original
+      saveAuthData(data.token, data.user);
+      
+      // 2. Actualizar el estado global del contexto
+      await login(data.user, data.token);
+
+      // 3. Redirección basada en rol
+      const rutaDestino = data.user.rol === 'administrador' 
+        ? '/admin/dashboard' 
+        : '/docente/dashboard';
+      
+      navigate(rutaDestino, { replace: true });
+
+    } catch (error) {
+      console.error('Error en login:', error);
+      setError(error.message || 'Error al iniciar sesión. Verifique sus credenciales.');
+      
+      setFormData(prev => ({
+        ...prev,
+        password: ''
+      }));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-start justify-center bg-gray-50 px-4 pt-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-300">
           <div className="px-8 pt-8 pb-6">
@@ -62,7 +102,7 @@ const Login = () => {
               {/* Selector de rol */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Rol de usuario
+                  Seleccione su tipo de cuenta
                 </label>
                 <div className="flex space-x-4">
                   <button
@@ -74,9 +114,7 @@ const Login = () => {
                         : 'border-gray-300 hover:border-gray-400 text-gray-700'
                     }`}
                   >
-                    <User className={`w-4 h-4 mr-2 ${
-                      formData.role === 'docente' ? 'text-blue-600' : 'text-gray-500'
-                    }`} />
+                    <User className={`w-4 h-4 mr-2 ${formData.role === 'docente' ? 'text-blue-600' : 'text-gray-500'}`} />
                     <span className="text-sm font-medium">Docente</span>
                   </button>
                   <button
@@ -88,13 +126,20 @@ const Login = () => {
                         : 'border-gray-300 hover:border-gray-400 text-gray-700'
                     }`}
                   >
-                    <Shield className={`w-4 h-4 mr-2 ${
-                      formData.role === 'admin' ? 'text-green-600' : 'text-gray-500'
-                    }`} />
-                    <span className="text-sm font-medium">Admin</span>
+                    <Shield className={`w-4 h-4 mr-2 ${formData.role === 'admin' ? 'text-green-600' : 'text-gray-500'}`} />
+                    <span className="text-sm font-medium">Administrador</span>
                   </button>
                 </div>
+                <p className="mt-2 text-xs text-gray-500 text-center">
+                  Seleccione el tipo de cuenta que posee
+                </p>
               </div>
+
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl">
+                  <p className="text-red-600 text-sm text-center font-medium">{error}</p>
+                </div>
+              )}
 
               {/* Email */}
               <div>
@@ -111,9 +156,10 @@ const Login = () => {
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all"
                     placeholder="correo@institucion.edu.ve"
                     required
+                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -133,23 +179,19 @@ const Login = () => {
                     name="password"
                     value={formData.password}
                     onChange={handleInputChange}
-                    className="block w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    className="block w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all"
                     placeholder="••••••••"
                     required
-                    autoComplete="new-password"
+                    disabled={isLoading}
                   />
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="text-gray-400 hover:text-gray-600 focus:outline-none"
-                      aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                      disabled={isLoading}
                     >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                 </div>
@@ -173,10 +215,10 @@ const Login = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className={`w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-xl font-medium text-white ${
+                  className={`w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-xl font-medium text-white transition-all ${
                     isLoading 
                       ? 'bg-blue-400 cursor-not-allowed' 
-                      : 'bg-blue-600 hover:bg-blue-700'
+                      : 'bg-blue-600 hover:bg-blue-700 shadow-sm active:scale-[0.98]'
                   }`}
                 >
                   {isLoading ? (
@@ -196,6 +238,12 @@ const Login = () => {
                 </button>
               </div>
             </form>
+
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <p className="text-xs text-gray-500 text-center">
+                Nota: Si tiene problemas para iniciar sesión, contacte al administrador del sistema.
+              </p>
+            </div>
           </div>
         </div>
       </div>
