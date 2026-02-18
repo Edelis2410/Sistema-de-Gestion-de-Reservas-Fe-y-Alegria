@@ -1,7 +1,7 @@
 // src/dashboard/shared/views/Reservas/CrearReserva.jsx
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, ArrowRight, AlertCircle, Clock } from 'lucide-react'; // Añadí Clock para el icono
+import { CheckCircle, ArrowRight, AlertCircle, Clock } from 'lucide-react';
 
 // Componentes UI
 import CalendarPicker from '../../../../components/common/Forms/CalendarPicker';
@@ -39,7 +39,7 @@ const CrearReserva = () => {
 
   const [selectedDate, setSelectedDate] = useState(null);
 
-  // 1. CARGA DE ESPACIOS
+  // 1. CARGA DE ESPACIOS (solo activos)
   const loadEspacios = useCallback(async () => {
     try {
       setLoading(true);
@@ -47,19 +47,29 @@ const CrearReserva = () => {
       const result = await response.json();
       
       if (result.success) {
-        const simplificados = (result.data || []).map(esp => ({
+        // Mapeamos todos los datos, incluyendo 'activo'
+        const todosLosEspacios = (result.data || []).map(esp => ({
           id: esp.id,
           nombre: esp.nombre,
           capacidad: esp.capacidad,
-          tipo: esp.tipo
+          tipo: esp.tipo,
+          activo: esp.activo,                
+          descripcion: esp.descripcion        
         }));
-        setEspacios(simplificados);
 
+        // Filtramos solo los espacios activos
+        const espaciosActivos = todosLosEspacios.filter(esp => esp.activo === true);
+        setEspacios(espaciosActivos);
+
+        // Preselección desde localStorage (solo si el espacio está activo)
         const preselected = localStorage.getItem('selectedSpace');
         if (preselected) {
           const norm = (t) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-          const encontrado = simplificados.find(e => norm(e.nombre) === norm(preselected));
-          if (encontrado) setFormData(prev => ({ ...prev, espacio_id: encontrado.id.toString() }));
+          const encontrado = espaciosActivos.find(e => norm(e.nombre) === norm(preselected));
+          if (encontrado) {
+            setFormData(prev => ({ ...prev, espacio_id: encontrado.id.toString() }));
+          }
+          // Si no se encuentra (porque está inactivo), simplemente no preseleccionamos nada
           localStorage.removeItem('selectedSpace');
         }
       }
@@ -152,6 +162,29 @@ const CrearReserva = () => {
        return;
       }
     }
+
+    // --- VALIDACIÓN DE DURACIÓN (Mínimo 1h, Máximo 4h) ---
+    if (formData.hora_inicio && formData.hora_fin) {
+      const inicioArr = formData.hora_inicio.split(':').map(Number);
+      const finArr = formData.hora_fin.split(':').map(Number);
+      
+      // Convertimos todo a minutos para facilitar el cálculo
+      const minutosInicio = inicioArr[0] * 60 + inicioArr[1];
+      const minutosFin = finArr[0] * 60 + finArr[1];
+      const duracionMinutos = minutosFin - minutosInicio;
+
+      if (duracionMinutos > 240) { // 4 horas * 60 min
+        setErrorDisponibilidad('No puedes reservar por más de 4 horas.');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+
+      if (duracionMinutos < 60) { // 1 hora * 60 min
+        setErrorDisponibilidad('La reserva debe ser de al menos 1 hora.');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+    }
     
     if (!isFormValid()) return;
     
@@ -212,7 +245,10 @@ const CrearReserva = () => {
         setShowSuccessModal(true);
       } else {
         setSaving(false);
-        alert(`Error: ${result.error || 'No se pudo crear la reserva'}`);
+        // Aquí mostramos el error que viene del backend (por si la validación falla allá también)
+        setErrorDisponibilidad(result.error || 'No se pudo crear la reserva');
+        setShowModal(false);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch (error) {
       setSaving(false);
@@ -251,7 +287,7 @@ const CrearReserva = () => {
           onHoraFinChange={(h) => updateFormData('hora_fin', h)}
         />
         <SpaceSelector
-          espacios={espacios}
+          espacios={espacios}           // ← ahora espacios solo contiene los activos
           selectedSpace={formData.espacio_id}
           onSelectSpace={(id) => updateFormData('espacio_id', id)}
           loading={loading}

@@ -4,6 +4,7 @@ export const Button = ({
   variant = 'primary',
   size = 'md',
   icon: Icon,
+  fullWidth = false,        // PROP: ancho completo en móvil
   className = '',
   ...props 
 }) => {
@@ -17,18 +18,24 @@ export const Button = ({
     ghost: "bg-transparent border border-transparent text-slate-700 hover:bg-slate-100"
   };
 
+  // ✅ Tamaños responsivos: más compactos en móvil, igual que antes en desktop
   const sizes = {
-    sm: "px-3 py-1.5 text-sm",
-    md: "px-4 py-2.5 text-sm",
-    lg: "px-6 py-3 text-base"
+    sm: "px-2 py-1 text-xs sm:px-3 sm:py-1.5 sm:text-sm",
+    md: "px-3 py-1.5 text-sm sm:px-4 sm:py-2.5 sm:text-sm",
+    lg: "px-4 py-2 text-base sm:px-6 sm:py-3 sm:text-base"
   };
+
+  // ✅ Clase para ancho completo en móvil (opcional)
+  const widthClass = fullWidth ? "w-full sm:w-auto" : "";
 
   return (
     <button 
-      className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${className}`}
+      className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${widthClass} ${className}`}
       {...props}
     >
-      {Icon && <Icon className="h-4 w-4 mr-2" />}
+      {Icon && (
+        <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" /> // ✅ Ícono responsive
+      )}
       {children}
     </button>
   );

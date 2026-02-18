@@ -2,8 +2,11 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import ScrollToTop from './components/common/ScrollToTop';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import Login from './pages/Login';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword'; // 
 import DashboardLayout from './layouts/DashboardLayout';
 
 // ========== PÁGINAS PÚBLICAS ==========
@@ -47,6 +50,7 @@ const PublicLayout = ({ children }) => (
 const App = () => {
   return (
     <Router>
+      <ScrollToTop />
       <AuthProvider>
         <Routes>
           {/* ========== RUTAS PÚBLICAS ========== */}
@@ -55,7 +59,10 @@ const App = () => {
               <Home />
             </PublicLayout>
           } />
-          
+
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+
           <Route path="/espacios" element={
             <PublicLayout>
               <Espacios />

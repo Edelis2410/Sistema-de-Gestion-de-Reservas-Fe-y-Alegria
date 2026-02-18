@@ -6,7 +6,7 @@ const TimePicker = ({
   horaFin, 
   onHoraInicioChange, 
   onHoraFinChange,
-  quickDurations = [1, 2, 3, 4, 5, 6]
+  quickDurations = [1, 2, 3, 4] // solo muestra hasta 4 horas por defecto
 }) => {
   const handleQuickDuration = (hours) => {
     if (horaInicio) {
@@ -63,7 +63,7 @@ const TimePicker = ({
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Duración rápida (opcional)
           </label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2"> {/* ✅ Cambiado a grid-cols-2 para que se vea mejor con 4 botones */}
             {quickDurations.map((hours) => {
               const duration = calculateDuration();
               const isActive = Math.abs(duration - hours) < 0.1;

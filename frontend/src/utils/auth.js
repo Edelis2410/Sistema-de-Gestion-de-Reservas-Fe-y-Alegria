@@ -9,13 +9,16 @@ export const saveAuthData = (token, user) => {
   try {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(user));
-    console.log('✅ [saveAuthData] Datos guardados:', {
+    //  Guardar el rol por separado para acceso rápido
+    localStorage.setItem('userRole', user?.rol || '');
+    console.log(' [saveAuthData] Datos guardados:', {
       tokenLength: token.length,
-      user: user.email
+      user: user.email,
+      role: user.rol
     });
     return true;
   } catch (error) {
-    console.error('❌ [saveAuthData] Error:', error);
+    console.error(' [saveAuthData] Error:', error);
     return false;
   }
 };
@@ -23,10 +26,10 @@ export const saveAuthData = (token, user) => {
 export const getToken = () => {
   const token = localStorage.getItem('token');
   if (!token) {
-    console.log('⚠️ [getToken] No hay token en localStorage');
+    console.log(' [getToken] No hay token en localStorage');
     return null;
   }
-  console.log(`🔑 [getToken] Token encontrado (${token.length} caracteres)`);
+  console.log(` [getToken] Token encontrado (${token.length} caracteres)`);
   return token;
 };
 
@@ -35,7 +38,7 @@ export const getUser = () => {
     const userStr = localStorage.getItem('user');
     return userStr ? JSON.parse(userStr) : null;
   } catch (error) {
-    console.error('❌ [getUser] Error:', error);
+    console.error(' [getUser] Error:', error);
     return null;
   }
 };
@@ -50,7 +53,8 @@ export const logout = () => {
   try {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    console.log('✅ [logout] Sesión cerrada');
+    localStorage.removeItem('userRole'); //  Limpiar también el rol
+    console.log(' [logout] Sesión cerrada');
     
     setTimeout(() => {
       window.location.href = '/login';
@@ -58,7 +62,7 @@ export const logout = () => {
     
     return true;
   } catch (error) {
-    console.error('❌ [logout] Error:', error);
+    console.error(' [logout] Error:', error);
     return false;
   }
 };
@@ -76,9 +80,10 @@ export const clearAuthData = () => {
   try {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    console.log('🧹 [clearAuthData] Datos eliminados de localStorage');
+    localStorage.removeItem('userRole'); // ✅ Limpiar también el rol
+    console.log(' [clearAuthData] Datos eliminados de localStorage');
   } catch (error) {
-    console.error('❌ [clearAuthData] Error:', error);
+    console.error(' [clearAuthData] Error:', error);
   }
 };
 
@@ -87,16 +92,16 @@ export const clearAuthData = () => {
 // ======================
 
 export const authFetch = async (url, options = {}) => {
-  console.log(`🌐 [authFetch] Iniciando: ${url}`);
+  console.log(` [authFetch] Iniciando: ${url}`);
   
   const token = getToken();
   if (!token) {
-    console.error('❌ [authFetch] No hay token disponible');
+    console.error(' [authFetch] No hay token disponible');
     logout();
     return null;
   }
   
-  console.log(`🔐 [authFetch] Usando token (${token.length} caracteres)`);
+  console.log(` [authFetch] Usando token (${token.length} caracteres)`);
   
   const headers = {
     'Content-Type': 'application/json',
@@ -111,16 +116,16 @@ export const authFetch = async (url, options = {}) => {
       credentials: 'include'
     });
     
-    console.log(`📥 [authFetch] Respuesta: ${response.status} ${response.statusText}`);
+    console.log(` [authFetch] Respuesta: ${response.status} ${response.statusText}`);
     
     if (response.status === 401) {
-      console.error('🔒 [authFetch] Error 401 - Token inválido');
+      console.error(' [authFetch] Error 401 - Token inválido');
       logout();
       return null;
     }
     
     if (!response.ok) {
-      console.error(`❌ [authFetch] Error HTTP ${response.status}`);
+      console.error(` [authFetch] Error HTTP ${response.status}`);
       try {
         const errorData = await response.json();
         throw new Error(errorData.error || `Error ${response.status}`);
@@ -129,11 +134,11 @@ export const authFetch = async (url, options = {}) => {
       }
     }
     
-    console.log('✅ [authFetch] Petición exitosa');
+    console.log(' [authFetch] Petición exitosa');
     return response;
     
   } catch (error) {
-    console.error('🔥 [authFetch] Error completo:', error);
+    console.error(' [authFetch] Error completo:', error);
     throw error;
   }
 };
@@ -147,7 +152,7 @@ export const verifyToken = async () => {
     const token = getToken();
     if (!token) return false;
     
-    console.log('🔍 [verifyToken] Verificando token...');
+    console.log(' [verifyToken] Verificando token...');
     const response = await authFetch(`${API_URL}/verify-token`);
     
     if (!response) return false;
@@ -156,7 +161,7 @@ export const verifyToken = async () => {
     return data.success === true;
     
   } catch (error) {
-    console.error('❌ [verifyToken] Error:', error);
+    console.error(' [verifyToken] Error:', error);
     return false;
   }
 };
@@ -166,20 +171,19 @@ export const verifyToken = async () => {
 // ======================
 
 export const testConnection = async () => {
-  console.log('🧪 [testConnection] Iniciando prueba...');
+  console.log(' [testConnection] Iniciando prueba...');
   
   try {
     const healthResponse = await fetch(`${API_URL}/health`);
     const healthData = await healthResponse.json();
-    console.log('✅ [testConnection] Servidor activo:', healthData.message);
+    console.log(' [testConnection] Servidor activo:', healthData.message);
   } catch (error) {
-    console.error('❌ [testConnection] No hay conexión con el servidor');
+    console.error(' [testConnection] No hay conexión con el servidor');
     throw new Error('El servidor no está disponible');
   }
   
   return { success: true };
 };
-
 
 // ======================
 // FUNCIÓN PARA ACTUALIZAR DATOS (Requerida por AuthContext)
@@ -190,7 +194,7 @@ export const refreshUserData = async () => {
     const user = getUser();
     if (!user) return null;
 
-    console.log('🔄 [refreshUserData] Actualizando datos del usuario...');
+    console.log(' [refreshUserData] Actualizando datos del usuario...');
     
     // Hacemos una petición al servidor para traer los datos frescos
     const response = await authFetch(`${API_URL}/usuarios/${user.id}`);
@@ -203,12 +207,12 @@ export const refreshUserData = async () => {
       const token = getToken();
       saveAuthData(token, updatedUser);
       
-      console.log('✅ [refreshUserData] Datos actualizados con éxito');
+      console.log(' [refreshUserData] Datos actualizados con éxito');
       return updatedUser;
     }
     return user;
   } catch (error) {
-    console.error('❌ [refreshUserData] Error:', error);
+    console.error(' [refreshUserData] Error:', error);
     return getUser(); // Si falla, devolvemos lo que ya tenemos
   }
 };

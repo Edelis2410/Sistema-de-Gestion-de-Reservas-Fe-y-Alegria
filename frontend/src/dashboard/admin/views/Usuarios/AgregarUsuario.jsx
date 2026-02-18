@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { User, Mail, Lock, Shield, Save, CheckCircle, AlertCircle } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { User, Mail, Lock, Shield, Save, CheckCircle, AlertCircle, ChevronDown } from 'lucide-react';
 
 const AgregarUsuario = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
 
+  // Estado para el formulario
   const [formData, setFormData] = useState({
     nombre: '',
     email: '',
@@ -13,6 +14,21 @@ const AgregarUsuario = () => {
     rol_id: 1, // Por defecto Docente
     activo: true
   });
+
+  // ✅ Estados para dropdown personalizado de rol
+  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+  const roleDropdownRef = useRef(null);
+
+  // ✅ Cerrar dropdown al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target)) {
+        setIsRoleDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -53,6 +69,15 @@ const AgregarUsuario = () => {
       setIsLoading(false);
     }
   };
+
+  // Opciones de rol
+  const roles = [
+    { id: 1, nombre: 'Docente' },
+    { id: 2, nombre: 'Administrador' }
+  ];
+
+  // Obtener el nombre del rol seleccionado
+  const selectedRoleName = roles.find(r => r.id === formData.rol_id)?.nombre || 'Docente';
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen flex justify-center">
@@ -128,20 +153,45 @@ const AgregarUsuario = () => {
               </div>
             </div>
 
-            {/* Campo: Rol (Usando tus IDs correctos) */}
+            {/* ✅ DROPDOWN PERSONALIZADO PARA TIPO DE USUARIO */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Usuario</label>
-              <div className="relative">
-                <Shield className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-                <select
-                  name="rol_id"
-                  value={formData.rol_id}
-                  onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+              <div className="relative" ref={roleDropdownRef}>
+                {/* Ícono a la izquierda */}
+                <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                  <Shield className="w-4 h-4 text-gray-400" />
+                </div>
+                
+                {/* Botón principal del dropdown */}
+                <button
+                  type="button"
+                  onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+                  className="w-full pl-10 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none 
+                             bg-white text-left flex items-center justify-between"
                 >
-                  <option value={1}>Docente</option>
-                  <option value={2}>Administrador</option>
-                </select>
+                  <span className="truncate">{selectedRoleName}</span>
+                  <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isRoleDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {/* Menú desplegable */}
+                {isRoleDropdownOpen && (
+                  <div className="absolute left-0 right-0 mt-1 w-full bg-white border rounded-lg shadow-lg z-50 py-1 max-h-60 overflow-y-auto">
+                    {roles.map((rol) => (
+                      <button
+                        key={rol.id}
+                        type="button"
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, rol_id: rol.id }));
+                          setIsRoleDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors
+                                   ${formData.rol_id === rol.id ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'}`}
+                      >
+                        {rol.nombre}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 

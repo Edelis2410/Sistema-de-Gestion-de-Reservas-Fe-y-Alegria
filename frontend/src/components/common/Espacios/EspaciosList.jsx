@@ -78,4 +78,4 @@ const EspaciosList = ({
   );
 };
 
-export default EspaciosList; // ¡IMPORTANTE! Debe terminar con esto
+export default EspaciosList; 

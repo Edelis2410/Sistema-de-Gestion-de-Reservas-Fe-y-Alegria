@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   HelpCircle, Mail, Phone, MessageSquare, 
   ChevronDown, ChevronUp, CheckCircle, 
-  AlertCircle, Clock
+  Clock
 } from 'lucide-react';
 
 const Help = () => {
@@ -46,17 +46,6 @@ const Help = () => {
 
   const supportContacts = [
     {
-      tipo: 'Soporte Técnico',
-      descripcion: 'Problemas con el sistema o acceso',
-      email: 'soporte@feialegria.edu',
-      telefono: '+51 1 123 4567',
-      horario: 'Lun-Vie: 8:00 AM - 4:00 PM',
-      icon: AlertCircle,
-      color: 'bg-red-50 border-red-100',
-      iconColor: 'text-red-600',
-      bgColor: 'bg-red-100'
-    },
-    {
       tipo: 'Administración',
       descripcion: 'Consultas sobre políticas y permisos',
       email: 'sistemareserva.feyalegria2026@gmail.com',
@@ -74,10 +63,10 @@ const Help = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-6">
+    <div className="min-h-screen bg-slate-50 p-4 md:p-6 text-left">
       <div className="mx-auto max-w-7xl">
         {/* Header */}
-        <div className="mb-8 text-center md:text-left">
+        <div className="mb-8">
           <h1 className="text-2xl font-semibold text-slate-900">Centro de ayuda</h1>
           <p className="mt-2 text-sm text-slate-600">
             Resuelve tus dudas rápidamente o contacta con nosotros.
@@ -137,9 +126,9 @@ const Help = () => {
             </section>
           </div>
 
-          {/* Sección derecha: Contacto Unificado */}
+          {/* Sección derecha: Contacto */}
           <div className="space-y-6">
-            <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
+            <section className="rounded-xl border border-slate-200 bg-white shadow-sm h-fit">
               <div className="border-b border-slate-100 px-6 py-4">
                 <div className="flex items-center gap-3">
                   <div className="rounded-lg bg-blue-50 p-2">
@@ -151,28 +140,34 @@ const Help = () => {
 
               <div className="p-6 space-y-4">
                 {supportContacts.map((contact, index) => (
-                  <div key={index} className={`rounded-lg border ${contact.color} p-4`}>
-                    <div className="mb-3 flex items-start gap-3">
+                  <div key={index} className={`rounded-xl border ${contact.color} p-4 shadow-sm`}>
+                    <div className="mb-4 flex items-start gap-3">
                       <div className={`rounded-lg ${contact.bgColor} p-2 flex-shrink-0`}>
-                        <contact.icon className={`h-4 w-4 ${contact.iconColor}`} />
+                        <contact.icon className={`h-5 w-5 ${contact.iconColor}`} />
                       </div>
                       <div>
                         <h3 className="text-sm font-bold text-slate-900">{contact.tipo}</h3>
-                        <p className="text-xs text-slate-500 mt-0.5">{contact.descripcion}</p>
+                        <p className="text-xs text-slate-500 mt-1 leading-relaxed">{contact.descripcion}</p>
                       </div>
                     </div>
                     
-                    <div className="space-y-2 pt-2 border-t border-black/5">
-                      <a href={`mailto:${contact.email}`} className="flex items-center gap-2 text-xs text-slate-600 hover:text-blue-600">
-                        <Mail className="h-3.5 w-3.5" />
-                        {contact.email}
+                    <div className="space-y-3 pt-3 border-t border-black/5">
+                      {/* El break-all asegura que el email largo no rompa el diseño */}
+                      <a 
+                        href={`mailto:${contact.email}`} 
+                        className="flex items-start gap-2 text-xs text-slate-600 hover:text-blue-600 transition-colors group"
+                      >
+                        <Mail className="h-4 w-4 mt-0.5 flex-shrink-0 group-hover:scale-110 transition-transform" />
+                        <span className="break-all leading-tight font-medium">{contact.email}</span>
                       </a>
+                      
                       <div className="flex items-center gap-2 text-xs text-slate-600">
-                        <Phone className="h-3.5 w-3.5" />
-                        {contact.telefono}
+                        <Phone className="h-4 w-4 flex-shrink-0" />
+                        <span className="font-medium">{contact.telefono}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-[10px] text-slate-400 uppercase font-medium">
-                        <Clock className="h-3.5 w-3.5" />
+                      
+                      <div className="flex items-center gap-2 text-[10px] text-slate-400 uppercase font-bold tracking-tight">
+                        <Clock className="h-4 w-4 flex-shrink-0" />
                         {contact.horario}
                       </div>
                     </div>
@@ -180,11 +175,11 @@ const Help = () => {
                 ))}
 
                 <button 
-                  onClick={() => window.location.href = 'mailto:soporte@feialegria.edu'}
-                  className="w-full mt-4 flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-all duration-200"
+                  onClick={() => window.location.href = 'mailto:sistemareserva.feyalegria2026@gmail.com'}
+                  className="w-full mt-2 flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-200 hover:bg-blue-700 hover:scale-[1.02] active:scale-[0.98] transition-all"
                 >
                   <Mail className="h-4 w-4" />
-                  Escribir un correo ahora
+                  Contactar Administración
                 </button>
               </div>
             </section>

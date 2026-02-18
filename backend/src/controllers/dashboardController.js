@@ -94,25 +94,62 @@ exports.getDocenteStats = async (req, res) => {
 exports.getReporteEstadisticas = async (req, res) => {
     try {
         const { periodo } = req.query;
-        let fechaInicio = new Date();
-        fechaInicio.setHours(0, 0, 0, 0);
+        let fechaInicio, fechaFin;
 
-        if (periodo === 'semanal') fechaInicio.setDate(fechaInicio.getDate() - 7);
-        else if (periodo === 'mensual') fechaInicio.setMonth(fechaInicio.getMonth() - 1);
-        else if (periodo === 'anual') fechaInicio.setFullYear(fechaInicio.getFullYear() - 1);
+        // Obtener la fecha actual en UTC (año, mes, día)
+        const ahora = new Date();
+        const hoyUTC = new Date(Date.UTC(ahora.getFullYear(), ahora.getMonth(), ahora.getDate()));
 
-        const [totalUsuarios, totalReservas, reservasDb, usuariosDb, espaciosDb] = await Promise.all([
-            prisma.usuario.count(),
-            prisma.reserva.count({ where: { fecha: { gte: fechaInicio } } }),
+        switch (periodo) {
+            case 'hoy':
+                fechaInicio = hoyUTC;
+                fechaFin = new Date(Date.UTC(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 23, 59, 59, 999));
+                break;
+            case 'semanal':
+                fechaInicio = new Date(Date.UTC(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() - 7));
+                fechaFin = new Date(Date.UTC(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 23, 59, 59, 999));
+                break;
+            case 'mensual':
+                fechaInicio = new Date(Date.UTC(ahora.getFullYear(), ahora.getMonth() - 1, ahora.getDate()));
+                fechaFin = new Date(Date.UTC(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 23, 59, 59, 999));
+                break;
+            case 'anual':
+                fechaInicio = new Date(Date.UTC(ahora.getFullYear() - 1, ahora.getMonth(), ahora.getDate()));
+                fechaFin = new Date(Date.UTC(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 23, 59, 59, 999));
+                break;
+            default:
+                fechaInicio = new Date(Date.UTC(ahora.getFullYear(), ahora.getMonth() - 1, ahora.getDate()));
+                fechaFin = new Date(Date.UTC(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 23, 59, 59, 999));
+        }
+
+        // Filtro para reservas y usuarios basado en fecha_creacion
+        const whereFecha = {
+            fecha_creacion: {
+                gte: fechaInicio,
+                lte: fechaFin
+            }
+        };
+
+        console.log('Periodo:', periodo);
+        console.log('fechaInicio:', fechaInicio.toISOString());
+        console.log('fechaFin:', fechaFin.toISOString());
+
+        // Para espacios, no filtramos por fecha_creacion (los espacios existen siempre)
+        // pero las reservas asociadas sí se filtran más adelante
+
+        const [totalUsuariosPeriodo, totalReservasPeriodo, reservasDb, usuariosDb, espaciosDb] = await Promise.all([
+            prisma.usuario.count({ where: whereFecha }), // usuarios registrados en el período
+            prisma.reserva.count({ where: whereFecha }), // reservas creadas en el período
             prisma.reserva.findMany({
-                where: { fecha: { gte: fechaInicio } },
+                where: whereFecha,
                 include: { 
                     usuario: { select: { nombre: true } }, 
                     espacio: { select: { nombre: true } } 
                 },
-                orderBy: { fecha: 'desc' }
+                orderBy: { fecha_creacion: 'desc' }
             }),
             prisma.usuario.findMany({
+                where: whereFecha, // solo usuarios creados en el período
                 select: {
                     id: true, nombre: true, email: true, fecha_creacion: true,
                     rol: { select: { nombre: true } },
@@ -120,21 +157,32 @@ exports.getReporteEstadisticas = async (req, res) => {
                 }
             }),
             prisma.espacio.findMany({
-                where: { activo: true },
+                where: { eliminado: false }, // todos los espacios activos no eliminados
                 include: { 
-                    reservas: { select: { hora_inicio: true, hora_fin: true } },
+                    reservas: { 
+                        select: { hora_inicio: true, hora_fin: true },
+                        where: whereFecha // solo reservas del período
+                    },
                     _count: { select: { reservas: true } } 
                 }
             })
         ]);
 
+        console.log(`Reservas encontradas para ${periodo}:`, reservasDb.length);
+        console.log(`Usuarios encontrados para ${periodo}:`, usuariosDb.length);
+
         const aprobadasCount = reservasDb.filter(r => r.estado === 'confirmada').length;
-        const tasaCalculada = totalReservas > 0 ? `${Math.round((aprobadasCount / totalReservas) * 100)}%` : "0%";
+        const tasaCalculada = totalReservasPeriodo > 0 ? `${Math.round((aprobadasCount / totalReservasPeriodo) * 100)}%` : "0%";
 
         res.json({
             success: true,
             data: {
-                sistema: { totalUsuarios, totalEspacios: espaciosDb.length, totalReservas, tasaConfirmadas: tasaCalculada },
+                sistema: { 
+                    totalUsuarios: totalUsuariosPeriodo, 
+                    totalEspacios: espaciosDb.length, // total de espacios (no filtrado por fecha)
+                    totalReservas: totalReservasPeriodo, 
+                    tasaConfirmadas: tasaCalculada 
+                },
                 reservas: reservasDb.map(r => {
                     let duracionTexto = "N/A";
                     if (r.hora_inicio && r.hora_fin) {
@@ -167,17 +215,19 @@ exports.getReporteEstadisticas = async (req, res) => {
                         return acc;
                     }, 0);
                     return {
-                        id: e.id, espacio: e.nombre,
+                        id: e.id, 
+                        espacio: e.nombre,
                         horasTotales: Math.round(horasTotalesReales * 10) / 10,
-                        porcentajeOcupacion: Math.min((e._count.reservas * 10), 100),
-                        numeroReservas: e._count.reservas,
-                        disponibilidad: e._count.reservas > 10 ? 'Baja' : 'Alta',
+                        porcentajeOcupacion: Math.min((e.reservas.length * 10), 100),
+                        numeroReservas: e.reservas.length,
+                        disponibilidad: e.reservas.length > 10 ? 'Baja' : 'Alta',
                         estado: e.activo ? 'Activo' : 'Inactivo'
                     };
                 })
             }
         });
     } catch (error) {
+        console.error("Error en getReporteEstadisticas:", error);
         res.status(500).json({ success: false, error: error.message });
     }
 };

@@ -4,6 +4,7 @@ import {
   Search, 
   Filter, 
   Eye, 
+  EyeOff,
   Trash2, 
   Calendar,
   CheckCircle,
@@ -52,6 +53,10 @@ const HistorialReservas = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [reservaSeleccionada, setReservaSeleccionada] = useState(null);
 
+  // Estados para ocultar reservas
+  const [hiddenReservations, setHiddenReservations] = useState([]);
+  const [showHidden, setShowHidden] = useState(false);
+
   const isAdmin = localStorage.getItem('rol') === 'admin'; 
   
   const espaciosDisponibles = [
@@ -60,6 +65,18 @@ const HistorialReservas = () => {
     { id: 3, nombre: 'SACRAMENTO', capacidad: 6, tipo: 'Salón de Eventos' },
     { id: 4, nombre: 'SALÓN MÚLTIPLE', capacidad: 20, tipo: 'Espacio Polivalente' },
   ];
+
+  // Cargar IDs ocultos desde localStorage al iniciar
+  useEffect(() => {
+    const storedHidden = localStorage.getItem('hiddenReservations');
+    if (storedHidden) {
+      try {
+        setHiddenReservations(JSON.parse(storedHidden));
+      } catch (e) {
+        console.error('Error parsing hidden reservations', e);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     loadReservations();
@@ -122,6 +139,7 @@ const HistorialReservas = () => {
     return espacio ? espacio.nombre : 'Espacio Reservado';
   };
 
+  // Filtrar según búsqueda, estado y visibilidad (ocultas/no ocultas)
   const filteredReservas = reservas.filter(reserva => {
     const espacioNombre = (reserva.espacioNombre || obtenerNombreEspacio(reserva.espacio)).toLowerCase();
     const motivo = (reserva.motivo || '').toLowerCase();
@@ -129,7 +147,14 @@ const HistorialReservas = () => {
     const normalizar = (texto) => texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const matchesSearch = normalizar(espacioNombre).includes(normalizar(busqueda)) || normalizar(motivo).includes(normalizar(busqueda));
     const matchesFilter = !filterStatus || reserva.estado === filterStatus;
-    return matchesSearch && matchesFilter;
+    
+    // Filtro de ocultas
+    const isHidden = hiddenReservations.includes(reserva.id);
+    if (showHidden) {
+      return isHidden && matchesSearch && matchesFilter;
+    } else {
+      return !isHidden && matchesSearch && matchesFilter;
+    }
   });
 
   const getEstadoColor = (estado) => {
@@ -166,11 +191,31 @@ const HistorialReservas = () => {
       });
       const result = await response.json();
       if (result.success) {
+        // Eliminar también de la lista de ocultas si estaba
+        setHiddenReservations(prev => {
+          const newHidden = prev.filter(id => id !== reservaSeleccionada.id);
+          localStorage.setItem('hiddenReservations', JSON.stringify(newHidden));
+          return newHidden;
+        });
         setShowCancelarModal(false);
         setShowSuccessModal(true);
         loadReservations(); 
       }
     } catch (error) { alert('❌ Error de conexión'); }
+  };
+
+  // Función para ocultar/restaurar reserva
+  const toggleHideReservation = (id) => {
+    setHiddenReservations(prev => {
+      let newHidden;
+      if (prev.includes(id)) {
+        newHidden = prev.filter(h => h !== id);
+      } else {
+        newHidden = [...prev, id];
+      }
+      localStorage.setItem('hiddenReservations', JSON.stringify(newHidden));
+      return newHidden;
+    });
   };
 
   const formatFecha = (fecha) => {
@@ -189,6 +234,18 @@ const HistorialReservas = () => {
           </div>
           
           <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4">
+            {/* Botón para alternar vista ocultas - MÁS PEQUEÑO Y SIN ÍCONO */}
+            <button
+              onClick={() => setShowHidden(!showHidden)}
+              className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+                showHidden 
+                  ? 'bg-purple-100 text-purple-700 border-purple-300' 
+                  : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+              }`}
+            >
+              {showHidden ? 'Ver todas' : 'Ver ocultas'}
+            </button>
+
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
@@ -258,6 +315,20 @@ const HistorialReservas = () => {
                         <button onClick={() => handleViewDetails(reserva.id)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg">
                           <Eye className="h-4 w-4" />
                         </button>
+                        
+                        {/* Botón para ocultar/restaurar */}
+                        <button
+                          onClick={() => toggleHideReservation(reserva.id)}
+                          className={`p-1.5 rounded-lg ${
+                            hiddenReservations.includes(reserva.id)
+                              ? 'text-purple-600 hover:bg-purple-50'
+                              : 'text-gray-600 hover:bg-gray-100'
+                          }`}
+                          title={hiddenReservations.includes(reserva.id) ? 'Restaurar' : 'Ocultar'}
+                        >
+                          {hiddenReservations.includes(reserva.id) ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+
                         <button 
                           onClick={() => handleDeleteClick(reserva.id)} 
                           disabled={!isAdmin && reserva.estado !== 'pendiente'} 

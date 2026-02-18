@@ -67,27 +67,40 @@ const createReserva = async (req, res) => {
     try {
         const { titulo, fecha, hora_inicio, hora_fin, espacio_id } = req.body;
 
-        // --- VALIDACIÓN DE FECHA Y HORA PASADA ---
-        const ahora = new Date();
-        const fechaSolicitada = new Date(fecha);
+        // --- VALIDACIÓN DE DURACIÓN (Mínimo 1h, Máximo 4h) ---
+        const inicioDate = new Date(`1970-01-01T${hora_inicio}:00.000Z`);
+        const finDate = new Date(`1970-01-01T${hora_fin}:00.000Z`);
         
-        // Normalizamos ambas fechas a medianoche para comparar días
-        const hoyMedianoche = new Date();
-        hoyMedianoche.setHours(0, 0, 0, 0);
-        
-        const fechaSolicitadaMedianoche = new Date(fechaSolicitada);
-        fechaSolicitadaMedianoche.setHours(0, 0, 0, 0);
+        const duracionHoras = (finDate - inicioDate) / (1000 * 60 * 60);
 
-        // 1. Validar si el día es anterior a hoy
-        if (fechaSolicitadaMedianoche < hoyMedianoche) {
+        if (duracionHoras > 4) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'No puedes reservar por más de 4 horas.' 
+            });
+        }
+
+        if (duracionHoras < 1) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'La reserva debe ser de al menos 1 hora.' 
+            });
+        }
+        // ----------------------------------------------------
+
+        // --- VALIDACIÓN DE FECHA Y HORA PASADA (CORREGIDA) ---
+        const ahora = new Date();
+        const hoyStr = ahora.toLocaleDateString('en-CA'); // YYYY-MM-DD
+
+        if (fecha < hoyStr) {
             return res.status(400).json({ 
                 success: false, 
                 error: 'No se pueden realizar reservas en fechas pasadas.' 
             });
         }
 
-        // 2. Si es para hoy, validar que la hora de inicio no haya pasado ya
-        if (fechaSolicitadaMedianoche.getTime() === hoyMedianoche.getTime()) {
+        // Si es hoy, validar que la hora de inicio no sea pasada
+        if (fecha === hoyStr) {
             const [hInicio, mInicio] = hora_inicio.split(':').map(Number);
             const horaActual = ahora.getHours();
             const minutosActuales = ahora.getMinutes();
@@ -99,17 +112,40 @@ const createReserva = async (req, res) => {
                 });
             }
         }
-        // ------------------------------------------
+        // ----------------------------------------------------
 
-        // Normalización de rol para validación
+        // --- NUEVA VALIDACIÓN: Mínimo 1 día de anticipación ---
+        const fechaSolicitadaObj = new Date(fecha);
+        const fechaSolicitadaStr = fechaSolicitadaObj.toLocaleDateString('en-CA');
+        const hoyStrSinHora = new Date().toLocaleDateString('en-CA');
+        
+        // Calcular diferencia en días
+        const unDiaEnMs = 24 * 60 * 60 * 1000;
+        const diferenciaDias = Math.round((fechaSolicitadaObj - new Date(hoyStrSinHora)) / unDiaEnMs);
+
+        if (diferenciaDias < 1) {
+            return res.status(400).json({
+                success: false,
+                error: 'La reserva debe realizarse con al menos 1 día de anticipación. No puedes reservar para el día de hoy.'
+            });
+        }
+
+        // --- NUEVA VALIDACIÓN: Máximo 15 días de anticipación ---
+        if (diferenciaDias > 15) {
+            return res.status(400).json({
+                success: false,
+                error: 'Solo puedes reservar con un máximo de 15 días de anticipación.'
+            });
+        }
+        // ----------------------------------------------------
+
         const rolUsuario = req.user.rol ? req.user.rol.toLowerCase().trim() : '';
         const esAdmin = (rolUsuario === 'administrador' || rolUsuario === 'admin');
         const estadoFinal = esAdmin ? 'confirmada' : 'pendiente';
 
-        // Validación de horario escolar (7 AM - 5 PM)
-        const [hInicio, mInicio] = hora_inicio.split(':').map(Number);
-        const [hFin, mFin] = hora_fin.split(':').map(Number);
-        const esHoraInvalida = hInicio < 7 || hFin > 17 || (hFin === 17 && mFin > 0);
+        const [hInicioStr, mInicioStr] = hora_inicio.split(':').map(Number);
+        const [hFinStr, mFinStr] = hora_fin.split(':').map(Number);
+        const esHoraInvalida = hInicioStr < 7 || hFinStr > 17 || (hFinStr === 17 && mFinStr > 0);
 
         if (esHoraInvalida) {
             return res.status(400).json({ 
@@ -122,8 +158,8 @@ const createReserva = async (req, res) => {
             data: {
                 titulo,
                 fecha: new Date(fecha),
-                hora_inicio: new Date(`1970-01-01T${hora_inicio}:00.000Z`),
-                hora_fin: new Date(`1970-01-01T${hora_fin}:00.000Z`),
+                hora_inicio: inicioDate,
+                hora_fin: finDate,
                 usuario_id: req.user.id,
                 espacio_id: parseInt(espacio_id),
                 estado: estadoFinal,
@@ -145,7 +181,6 @@ const updateReserva = async (req, res) => {
     const { estado, motivo_rechazo, titulo, fecha, hora_inicio, hora_fin, espacio_id } = req.body;
     
     try {
-        // 0. OBTENER DATOS ACTUALES (Para comparar y validar disponibilidad)
         const reservaPrevia = await prisma.reserva.findUnique({ 
             where: { id: parseInt(id) },
             include: { espacio: true, usuario: true }
@@ -155,45 +190,70 @@ const updateReserva = async (req, res) => {
             return res.status(404).json({ success: false, error: 'Reserva no encontrada' });
         }
 
-        // ---VALIDACIÓN: BLOQUEAR CAMBIOS AL PASADO ---
-        if (fecha || hora_inicio) {
-          const ahora = new Date();
-          const fechaEvaluar = fecha ? new Date(fecha) : reservaPrevia.fecha;
+        // --- VALIDACIÓN DE DURACIÓN EN ACTUALIZACIÓN ---
+        if (hora_inicio || hora_fin) {
+            const inicioVal = hora_inicio ? new Date(`1970-01-01T${hora_inicio}:00.000Z`) : reservaPrevia.hora_inicio;
+            const finVal = hora_fin ? new Date(`1970-01-01T${hora_fin}:00.000Z`) : reservaPrevia.hora_fin;
+            const duracionHoras = (finVal - inicioVal) / (1000 * 60 * 60);
 
-          const hoyMedianoche = new Date();
-          hoyMedianoche.setHours(0, 0, 0, 0);
-    
-          const fechaEvaluarMedianoche = new Date(fechaEvaluar);
-          fechaEvaluarMedianoche.setHours(0, 0, 0, 0);
-
-          if (fechaEvaluarMedianoche < hoyMedianoche) {
-            return res.status(400).json({ 
-            success: false, 
-            error: 'No se puede mover una reserva a una fecha pasada.' 
-           });
+            if (duracionHoras > 4) {
+                return res.status(400).json({ success: false, error: 'No puedes reservar por más de 4 horas.' });
+            }
+            if (duracionHoras < 1) {
+                return res.status(400).json({ success: false, error: 'La reserva debe ser de al menos 1 hora.' });
+            }
         }
 
-       if (fechaEvaluarMedianoche.getTime() === hoyMedianoche.getTime()) {
-         let hInicio, mInicio;
-        
-         // Si el admin mandó una nueva hora, usamos esa
-         if (hora_inicio) {
-            [hInicio, mInicio] = hora_inicio.split(':').map(Number);
-         } else {
-            // Si no mandó hora, usamos la que ya tenía la reserva (es objeto Date)
-            hInicio = reservaPrevia.hora_inicio.getUTCHours();
-            mInicio = reservaPrevia.hora_inicio.getUTCMinutes();
+        // --- VALIDACIÓN DE FECHA PASADA Y ANTICIPACIÓN EN ACTUALIZACIÓN ---
+        if (fecha) {
+            const ahora = new Date();
+            const hoyStr = ahora.toLocaleDateString('en-CA');
+            
+            if (fecha < hoyStr) {
+                return res.status(400).json({ 
+                    success: false, 
+                    error: 'No se puede mover una reserva a una fecha pasada.' 
+                });
+            }
+
+            // NUEVA VALIDACIÓN: Mínimo 1 día de anticipación (incluso en actualización)
+            const fechaSolicitadaObj = new Date(fecha);
+            const fechaSolicitadaStr = fechaSolicitadaObj.toLocaleDateString('en-CA');
+            const hoyStrSinHora = new Date().toLocaleDateString('en-CA');
+            
+            const unDiaEnMs = 24 * 60 * 60 * 1000;
+            const diferenciaDias = Math.round((fechaSolicitadaObj - new Date(hoyStrSinHora)) / unDiaEnMs);
+
+            if (diferenciaDias < 1) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'La reserva debe realizarse con al menos 1 día de anticipación. No puedes reservar para el día de hoy.'
+                });
+            }
+
+            // NUEVA VALIDACIÓN: Máximo 15 días de anticipación
+            if (diferenciaDias > 15) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Solo puedes reservar con un máximo de 15 días de anticipación.'
+                });
+            }
+
+            if (fecha === hoyStr && hora_inicio) {
+                const [hInicio, mInicio] = hora_inicio.split(':').map(Number);
+                const horaActual = ahora.getHours();
+                const minutosActuales = ahora.getMinutes();
+
+                if (hInicio < horaActual || (hInicio === horaActual && mInicio < minutosActuales)) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'No puedes programar una reserva para una hora que ya pasó.'
+                    });
+                }
+            }
         }
+        // ----------------------------------------------------
 
-        if (hInicio < ahora.getHours() || (hInicio === ahora.getHours() && mInicio < ahora.getMinutes())) {
-            return res.status(400).json({
-                success: false,
-                error: 'No puedes programar una reserva para una hora que ya pasó.'
-            });
-        } }
-    }
-
-        // 1. VALIDACIÓN DE DISPONIBILIDAD
         if (fecha || hora_inicio || hora_fin || espacio_id) {
             const fechaVal = fecha ? new Date(fecha) : reservaPrevia.fecha;
             const inicioVal = hora_inicio ? new Date(`1970-01-01T${hora_inicio}:00.000Z`) : reservaPrevia.hora_inicio;
@@ -221,7 +281,6 @@ const updateReserva = async (req, res) => {
             }
         }
 
-        // 2. PROCEDER CON LA ACTUALIZACIÓN
         const reservaActualizada = await prisma.reserva.update({
             where: { id: parseInt(id) },
             data: { 
@@ -240,12 +299,9 @@ const updateReserva = async (req, res) => {
             }
         });
 
-        // 3. LÓGICA DE NOTIFICACIONES (ESTADOS: Aprobación/Rechazo)
-    
         const user = reservaActualizada.usuario;
         const huboCambiosEnDatos = titulo || fecha || hora_inicio || hora_fin || espacio_id;
 
-        // 1. GESTIÓN DE EMAILS (Solo si el switch de Email está ON)
         if (user?.email && user.notificacionesEmail) {
             try {
                 if (estado === 'confirmada') {
@@ -258,7 +314,6 @@ const updateReserva = async (req, res) => {
             } catch (err) { console.error("Error al enviar email:", err); }
         }
 
-        // 2. GESTIÓN DE CAMPANITA (Solo si el switch de Push está ON)
         if (user?.notificacionesPush) {
             try {
                 let msgTitulo = '';

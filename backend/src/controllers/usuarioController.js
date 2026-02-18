@@ -3,6 +3,7 @@ const prisma = new PrismaClient();
 const bcrypt = require('bcryptjs'); // Usamos bcryptjs para evitar errores en Windows
 const jwt = require('jsonwebtoken');
 
+const { transporter } = require('../utils/mailer');
 // La clave ahora se toma de las variables de entorno para mayor seguridad
 const SECRET_KEY = process.env.SECRET_KEY || 'tu_clave_secreta_aqui';
 
@@ -58,7 +59,7 @@ exports.login = async (req, res) => {
     }
 };
 
-// --- 2. VERIFICAR TOKEN (Y cargar preferencias) ---
+// --- 2. VERIFICAR TOKEN (Y cargar preferencias actualizadas) ---
 exports.verifyToken = async (req, res) => {
     try {
         const usuario = await prisma.usuario.findUnique({ 
@@ -76,14 +77,11 @@ exports.verifyToken = async (req, res) => {
                 email: usuario.email,
                 rol: usuario.rol.nombre.toLowerCase(),
                 foto: usuario.foto,
-                // Enviamos las preferencias para que el Frontend las conozca al cargar
+                // Solo enviamos las preferencias que existen en tu nuevo esquema de Prisma
                 preferencias: {
                     notificacionesEmail: usuario.notificacionesEmail,
                     notificacionesPush: usuario.notificacionesPush,
-                    recordatorioReserva: usuario.recordatorioReserva,
-                    confirmacionReserva: usuario.confirmacionReserva,
-                    notificarCambios: usuario.notificarCambios,
-                    notificarRechazos: usuario.notificarRechazos
+                    recordatorioReserva: usuario.recordatorioReserva
                 }
             } 
         });
@@ -92,35 +90,33 @@ exports.verifyToken = async (req, res) => {
     }
 };
 
-// --- 3. ACTUALIZAR PREFERENCIAS (NUEVO) ---
+// --- 3. ACTUALIZAR PREFERENCIAS (LIMPIADO) ---
 exports.actualizarPreferencias = async (req, res) => {
     try {
         const p = req.body;
+        
         await prisma.usuario.update({
             where: { id: req.user.id },
             data: {
-                notificacionesEmail: p.notificacionesEmail,
-                notificacionesPush: p.notificacionesPush,
-                recordatorioReserva: p.recordatorioReserva,
-                confirmacionReserva: p.confirmacionReserva,
-                notificarCambios: p.notificarCambios,
-                notificarRechazos: p.notificarRechazos,
+                notificacionesEmail: Boolean(p.notificacionesEmail),
+                notificacionesPush: Boolean(p.notificacionesPush),
+                recordatorioReserva: Boolean(p.recordatorioReserva)
             }
         });
 
-        // Auditoría del cambio
+        // Auditoría
         await prisma.auditoria.create({
             data: {
                 usuario_id: req.user.id,
                 accion: 'actualizar_preferencias',
                 tabla_afectada: 'usuarios',
-                descripcion: `Usuario actualizó sus ajustes de notificación`
+                descripcion: `Usuario actualizó ajustes: Email(${p.notificacionesEmail}), Push(${p.notificacionesPush}), Recordatorio(${p.recordatorioReserva})`
             }
         });
 
         res.json({ success: true, message: 'Preferencias actualizadas' });
     } catch (error) {
-        console.error("Error al guardar preferencias:", error);
+        console.error("Error en el controlador:", error);
         res.status(500).json({ success: false, error: 'No se pudieron guardar los ajustes' });
     }
 };
@@ -253,5 +249,73 @@ exports.deleteUsuario = async (req, res) => {
         res.json({ success: true, message: 'Usuario desactivado correctamente' });
     } catch (e) {
         res.status(500).json({ success: false, error: 'No se pudo desactivar' });
+    }
+};
+
+// --- 9. SOLICITAR RECUPERACIÓN DE CONTRASEÑA ---
+exports.forgotPassword = async (req, res) => {
+    const { email } = req.body;
+    try {
+        const usuario = await prisma.usuario.findUnique({ 
+            where: { email: email.toLowerCase().trim() } 
+        });
+
+        if (!usuario) {
+            return res.json({ success: true, message: 'Si el correo existe, se enviará un enlace.' });
+        }
+
+        const resetToken = jwt.sign({ id: usuario.id }, SECRET_KEY, { expiresIn: '1h' });
+        const resetLink = `http://localhost:5173/reset-password?token=${resetToken}`;
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: usuario.email,
+            subject: 'Recuperación de Contraseña - Sistema de Reservas',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px;">
+                    <h2 style="color: #2563eb; text-align: center;">Recuperación de Contraseña</h2>
+                    <p>Hola <strong>${usuario.nombre}</strong>,</p>
+                    <p>Has solicitado restablecer tu contraseña. Haz clic en el botón:</p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${resetLink}" style="background-color: #2563eb; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                            Restablecer mi contraseña
+                        </a>
+                    </div>
+                </div>
+            `
+        };
+
+        await transporter.sendMail(mailOptions);
+        res.json({ success: true, message: 'Enlace de recuperación enviado.' });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'No se pudo enviar el correo' });
+    }
+};
+
+// --- 10. RESTABLECER CONTRASEÑA ---
+exports.resetPassword = async (req, res) => {
+    const { token, password } = req.body;
+    try {
+        const decoded = jwt.verify(token, SECRET_KEY);
+        const salt = await bcrypt.genSalt(10);
+        const password_hash = await bcrypt.hash(password, salt);
+
+        await prisma.usuario.update({
+            where: { id: decoded.id },
+            data: { password_hash: password_hash }
+        });
+
+        await prisma.auditoria.create({
+            data: {
+                usuario_id: decoded.id,
+                accion: 'reset_password',
+                tabla_afectada: 'usuarios',
+                descripcion: 'El usuario restableció su contraseña mediante enlace de correo'
+            }
+        });
+
+        res.json({ success: true, message: 'Contraseña actualizada correctamente' });
+    } catch (error) {
+        res.status(400).json({ success: false, error: 'El enlace es inválido o ha expirado' });
     }
 };

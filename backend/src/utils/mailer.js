@@ -68,7 +68,7 @@ const enviarCorreoModificacion = async (email, nombre, reserva) => {
     });
 
     const mailOptions = {
-        from: `"Sitema de Reservas" <${process.env.EMAIL_USER}>`,
+        from: `"Sistema de Reservas" <${process.env.EMAIL_USER}>`,
         to: email,
         subject: `⚠️ Modificación en tu reserva: ${reserva.titulo}`,
         html: `
@@ -101,16 +101,24 @@ const enviarCorreoModificacion = async (email, nombre, reserva) => {
     return transporter.sendMail(mailOptions);
 };
 
-// NO OLVIDES AGREGARLA AL EXPORTS
-module.exports = {
-    enviarCorreoAprobacion,
-    enviarCorreoRechazo,
-    enviarCorreoModificacion // 
-};
+
+// Esto es para que veas en la terminal si la conexión es exitosa
+transporter.verify((error, success) => {
+    if (error) {
+        console.error('Error en la configuración del correo:', error);
+    } else {
+        console.log('✅ Servidor de correos listo para enviar mensajes');
+    }
+});
+
+module.exports = transporter;
+
 
 // 4. EXPORTAR LAS FUNCIONES 
 module.exports = {
+  transporter,
   enviarCorreoAprobacion,
   enviarCorreoRechazo,
   enviarCorreoModificacion
+  
 };

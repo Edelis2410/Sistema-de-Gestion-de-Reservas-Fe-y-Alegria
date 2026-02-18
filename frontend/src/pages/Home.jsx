@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react'; // ✅ 1. Agregar useEffect
+import { Link, useNavigate, useLocation } from 'react-router-dom'; // ✅ 2. Agregar useLocation
 import { Calendar, Clock, Shield, Bell, CheckCircle, ArrowRight, Users, BarChart3, Library, BookOpen, MapPin, Cross } from 'lucide-react';
 
 // Importar la imagen de fondo
@@ -13,13 +13,21 @@ import capillaImage from '../assets/images/capilla_.png';
 
 const Home = () => {
   const navigate = useNavigate();
+  const location = useLocation(); // ✅ 3. Obtener la ubicación actual
+
+  // ✅ 4. Subir scroll automáticamente cada vez que se visita el Home
+  useEffect(() => {
+    if (location.pathname === '/') {
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: 'instant' // Cambia a 'smooth' si quieres animación suave
+      });
+    }
+  }, [location.pathname]);
 
   const handleReservarClick = (spaceName) => {
-    // Guardar en localStorage o estado global el espacio seleccionado
-    // para redirigir después del login
     localStorage.setItem('selectedSpace', spaceName);
-    
-    // Redirigir al login
     navigate('/login');
   };
 
@@ -97,14 +105,12 @@ const Home = () => {
             className="absolute inset-0 bg-cover bg-center"
             style={{ 
               backgroundImage: `url(${fondoImage})`,
-              backgroundPosition: 'center 35%' // Ajustado para que la imagen quede más arriba
+              backgroundPosition: 'center 35%'
             }}
           ></div>
-          {/* Overlay oscuro para mejor contraste del texto */}
           <div className="absolute inset-0 bg-black/40"></div>
         </div>
 
-        {/* Contenido sobre la imagen - ALINEADO A LA IZQUIERDA */}
         <div className="relative max-w-7xl mx-auto w-full px-6">
           <div className="max-w-2xl text-left">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mt-10 mb-4 leading-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
@@ -114,12 +120,10 @@ const Home = () => {
               </span>
             </h1>
             
-            {/* Subtítulo inventado */}
             <p className="text-xl text-white/90 mb-10 max-w-xl drop-shadow-[0_1px_4px_rgba(0,0,0,0.6)]">
               Maximiza el uso de instalaciones para un colegio más productivo
             </p>
             
-            {/* BOTÓN SOLO DE COMENZAR A RESERVAR - AZUL MUY OSCURO */}
             <div className="flex justify-start">
               <Link
                 to="/login"
@@ -153,17 +157,14 @@ const Home = () => {
                 key={index}
                 className="group relative overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-blue-100 p-8 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 hover:border-blue-200 flex flex-col items-center text-center"
               >
-                {/* Elemento decorativo - AZUL CLARITO */}
                 <div className="absolute top-0 right-0 w-32 h-32 -translate-y-16 translate-x-16">
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-200 to-blue-300 opacity-10 rounded-full"></div>
                 </div>
                 
-                {/* Icono con fondo GRIS OSCURO - CAMBIADO */}
                 <div className="inline-flex p-4 rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 text-white mb-6 group-hover:scale-110 transition-transform duration-300">
                   {React.cloneElement(feature.icon, { className: "w-6 h-6" })}
                 </div>
                 
-                {/* Contenido */}
                 <h3 className="text-xl font-bold text-gray-900 mb-4 group-hover:text-blue-700 transition-colors">
                   {feature.title}
                 </h3>
@@ -171,7 +172,6 @@ const Home = () => {
                   {feature.desc}
                 </p>
                 
-                {/* Línea decorativa inferior - GRIS OSCURO */}
                 <div className="mt-8 pt-6 border-t border-blue-200 w-full">
                   <div className="h-1 w-12 bg-gradient-to-r from-gray-700 to-gray-800 rounded-full transition-all duration-300 group-hover:w-20 mx-auto"></div>
                 </div>
@@ -199,15 +199,11 @@ const Home = () => {
                 key={index}
                 className="group relative overflow-hidden rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-gray-100"
               >
-                {/* Cards con IMAGEN DE FONDO en lugar de gradiente azul */}
                 <div 
                   className="h-48 relative bg-cover bg-center"
                   style={{ backgroundImage: `url(${space.image})` }}
                 >
-                  {/* Overlay oscuro para mejor legibilidad del texto */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/20"></div>
-                  
-                  {/* Overlay adicional en hover */}
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300"></div>
                   
                   <div className="absolute top-4 right-4 w-12 h-12 bg-white/30 backdrop-blur-sm rounded-xl flex items-center justify-center">
@@ -234,7 +230,6 @@ const Home = () => {
                     </div>
                   </div>
                   
-                  {/* Botón modificado para redirigir al login */}
                   <button
                     onClick={() => handleReservarClick(space.name)}
                     className="group w-full text-center py-3 bg-gradient-to-r from-blue-700 to-blue-800 text-white font-semibold rounded-lg hover:from-blue-800 hover:to-blue-900 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
@@ -261,7 +256,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Sección CTA - SIN ICONO DE ESTRELLA */}
+      {/* Sección CTA */}
       <section className="section-padding bg-gradient-to-r from-blue-100 via-blue-50 to-blue-100">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">

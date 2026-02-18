@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { LogIn, Lock, Mail, User, Shield, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { saveAuthData } from '../utils/auth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 
 const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    role: 'docente' // Esto ahora se enviará al backend
+    role: 'docente' 
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -39,6 +39,7 @@ const Login = () => {
     setError('');
 
     try {
+      // RESTAURADA TU RUTA ORIGINAL: /api/login
       const response = await fetch('http://localhost:5000/api/login', {
         method: 'POST',
         headers: {
@@ -57,19 +58,18 @@ const Login = () => {
         throw new Error(data.error || 'Credenciales incorrectas');
       }
 
-      // --- PERSISTENCIA CORREGIDA PARA LAS NOTIFICACIONES ---
-      // Guardamos explícitamente el token y el usuario para que el Header los reconozca
+      // --- PERSISTENCIA PARA EVITAR PESTAÑEO ---
+      // Mantenemos tus llaves de localStorage y el orden de ejecución
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
-      localStorage.setItem('userRole', data.user.rol); 
       
       // Llamada a tu utilidad original
       saveAuthData(data.token, data.user);
       
-      // 2. Actualizar el estado global del contexto
+      // Actualizar el estado global del contexto
       await login(data.user, data.token);
 
-      // 3. Redirección basada en rol
+      // Redirección basada en tus roles originales
       const rutaDestino = data.user.rol === 'administrador' 
         ? '/admin/dashboard' 
         : '/docente/dashboard';
@@ -130,9 +130,6 @@ const Login = () => {
                     <span className="text-sm font-medium">Administrador</span>
                   </button>
                 </div>
-                <p className="mt-2 text-xs text-gray-500 text-center">
-                  Seleccione el tipo de cuenta que posee
-                </p>
               </div>
 
               {error && (
@@ -197,16 +194,12 @@ const Login = () => {
                 </div>
                 
                 <div className="mt-2 text-right">
-                  <a 
-                    href="#" 
+                  <RouterLink
+                    to="/forgot-password"
                     className="text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      alert('Función de recuperación de contraseña pendiente');
-                    }}
                   >
                     ¿Olvidaste tu contraseña?
-                  </a>
+                  </RouterLink>
                 </div>
               </div>
 
@@ -221,15 +214,7 @@ const Login = () => {
                       : 'bg-blue-600 hover:bg-blue-700 shadow-sm active:scale-[0.98]'
                   }`}
                 >
-                  {isLoading ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Iniciando sesión...
-                    </>
-                  ) : (
+                  {isLoading ? 'Iniciando sesión...' : (
                     <>
                       <LogIn className="w-4 h-4 mr-2" />
                       Iniciar Sesión

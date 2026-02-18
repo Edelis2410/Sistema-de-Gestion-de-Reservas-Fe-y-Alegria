@@ -31,9 +31,9 @@ model Usuario {
   notificacionesEmail    Boolean @default(true)
   notificacionesPush     Boolean @default(true)
   recordatorioReserva    Boolean @default(true)
-  confirmacionReserva    Boolean @default(true)
-  notificarCambios       Boolean @default(true)
-  notificarRechazos Boolean @default(true)
+
+  resetToken          String?   @db.Text
+  resetTokenExpiry    DateTime?
   
   rol_id              Int
   rol                 Rol            @relation(fields: [rol_id], references: [id])
@@ -52,9 +52,10 @@ model Espacio {
   capacidad       Int
   descripcion     String?   @db.Text
   activo          Boolean   @default(true)
+  eliminado   Boolean  @default(false) // <--- AÑADE ESTA LÍNEA
   // Usamos DateTime con @db.Time para que coincida con tu SQL
   horario_inicio  DateTime? @default(dbgenerated("'07:00:00'")) @db.Time
-  horario_fin     DateTime? @default(dbgenerated("'16:00:00'")) @db.Time
+  horario_fin     DateTime? @default(dbgenerated("'17:00:00'")) @db.Time
   fecha_creacion  DateTime  @default(now()) @map("fecha_creacion")
   
   reservas        Reserva[]

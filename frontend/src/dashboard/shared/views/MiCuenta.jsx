@@ -2,8 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { 
-  User, Mail, Camera, Lock, Save, 
-  Edit2, X, Eye, EyeOff, CheckCircle, CircleUser
+  User, Camera, Save, X, CheckCircle, CircleUser, 
+  Mail, Phone, GraduationCap, Briefcase
 } from 'lucide-react';
 
 const MiCuenta = () => {
@@ -23,7 +23,6 @@ const MiCuenta = () => {
   const [tipoMensaje, setTipoMensaje] = useState('');
   const [cargando, setCargando] = useState(false);
 
-  // Sincronización: Solo actualiza si NO estamos editando para evitar el "pestañeo"
   useEffect(() => {
     if (user && !editando) {
       setPerfil({
@@ -55,139 +54,174 @@ const MiCuenta = () => {
       }
       const reader = new FileReader();
       reader.onload = (event) => {
-        const base64 = event.target.result;
-        // Actualizamos solo el estado local para que se vea la foto de inmediato
-        setPerfil(prev => ({ ...prev, foto: base64 }));
+        setPerfil(prev => ({ ...prev, foto: event.target.result }));
       };
       reader.readAsDataURL(file);
     }
   };
 
   const handleGuardarPerfil = async (e) => {
-    if (e) e.preventDefault(); // Evita que la página se recargue
+    if (e) e.preventDefault();
     setCargando(true);
-    
     try {
-      const datosParaEnviar = {
-        ...user, // Mantenemos datos existentes del context
+      const resultado = await updateUser({
+        ...user,
         nombre: perfil.nombre,
         email: perfil.correo,
         areaAcademica: perfil.areaAcademica,
         telefono: perfil.telefono,
-        foto: perfil.foto // Aquí va el Base64 de la nueva foto
-      };
-      
-      const resultado = await updateUser(datosParaEnviar);
-      
+        foto: perfil.foto
+      });
       if (resultado.success) {
         setEditando(false);
-        mostrarMensaje('Perfil actualizado exitosamente', 'exito');
+        mostrarMensaje('Perfil actualizado con éxito', 'exito');
       } else {
         mostrarMensaje(resultado.error || 'Error al guardar', 'error');
       }
     } catch (error) {
-      mostrarMensaje('Error de conexión con el servidor', 'error');
+      mostrarMensaje('Error de conexión', 'error');
     } finally {
       setCargando(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-6">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-slate-900">Mi cuenta</h1>
+    <div className="min-h-screen bg-slate-50/50 p-4 md:p-8 text-left">
+      <div className="mx-auto max-w-4xl">
+        
+        {/* Header con Mensajes de Feedback */}
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Mi Perfil</h1>
+            <p className="text-slate-500 text-sm">Gestiona tu información personal y presencia visual</p>
+          </div>
           {mensaje && (
-            <div className={`mt-4 rounded-lg border ${tipoMensaje === 'exito' ? 'border-green-100 bg-green-50 text-green-800' : 'border-red-100 bg-red-50 text-red-800'} px-4 py-3 text-sm flex items-center gap-2 animate-in fade-in`}>
-              {tipoMensaje === 'exito' ? <CheckCircle size={16}/> : <X size={16}/>}
-              {mensaje}
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-full border shadow-sm animate-in slide-in-from-top ${
+              tipoMensaje === 'exito' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-rose-50 border-rose-100 text-rose-700'
+            }`}>
+              {tipoMensaje === 'exito' ? <CheckCircle size={18}/> : <X size={18}/>}
+              <span className="font-medium text-sm">{mensaje}</span>
             </div>
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-50 rounded-lg"><User className="text-blue-600" size={20} /></div>
-                  <h2 className="font-semibold text-slate-900">Datos de perfil</h2>
-                </div>
-                <button 
-                  type="button"
-                  onClick={() => setEditando(!editando)} 
-                  className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors"
-                >
-                  {editando ? 'Cancelar' : 'Editar perfil'}
-                </button>
-              </div>
-
-              <div className="p-8">
-                <div className="flex flex-col items-center mb-8">
-                  <div className="relative">
-                    {perfil.foto ? (
-                      <img src={perfil.foto} alt="Perfil" className="h-32 w-32 rounded-full border-4 border-white object-cover shadow-md" />
-                    ) : (
-                      <div className="h-32 w-32 rounded-full border-4 border-white bg-slate-100 flex items-center justify-center text-slate-400 shadow-md">
-                        <CircleUser size={80} strokeWidth={1} />
-                      </div>
-                    )}
-                    {editando && (
-                      <button 
-                        type="button"
-                        onClick={handleIconClick}
-                        className="absolute bottom-0 right-0 p-2.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 shadow-lg transition-transform active:scale-95"
-                      >
-                        <Camera size={18} />
-                      </button>
-                    )}
-                    <input type="file" ref={fileInputRef} onChange={handleFotoChange} accept="image/*" className="hidden" />
+        {/* Card Principal */}
+        <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-100 overflow-hidden">
+          
+          {/* Banner Decorativo */}
+          <div className="h-32 bg-gradient-to-r from-blue-600 to-indigo-700 relative">
+            <div className="absolute -bottom-16 left-8">
+              <div className="relative group">
+                {perfil.foto ? (
+                  <img src={perfil.foto} alt="Perfil" className="h-32 w-32 rounded-2xl border-4 border-white object-cover shadow-lg bg-white" />
+                ) : (
+                  <div className="h-32 w-32 rounded-2xl border-4 border-white bg-slate-100 flex items-center justify-center text-slate-400 shadow-lg">
+                    <CircleUser size={64} strokeWidth={1} />
                   </div>
-                </div>
-
-                <form onSubmit={handleGuardarPerfil} className="grid gap-4 max-w-xl mx-auto text-left">
-                  <div className="grid gap-1.5">
-                    <label className="text-sm font-medium text-slate-700">Nombre Completo</label>
-                    <input 
-                      disabled={!editando}
-                      value={perfil.nombre}
-                      onChange={(e) => setPerfil({...perfil, nombre: e.target.value})}
-                      className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-slate-50 disabled:text-slate-500"
-                    />
-                  </div>
-                  <div className="grid gap-1.5">
-                    <label className="text-sm font-medium text-slate-700">Correo Electrónico</label>
-                    <input 
-                      disabled
-                      value={perfil.correo}
-                      className="w-full px-4 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-400"
-                    />
-                  </div>
-                  
-                  {editando && (
-                    <button 
-                      type="submit"
-                      disabled={cargando}
-                      className="mt-4 w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                    >
-                      {cargando ? <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" /> : <Save size={18} />}
-                      Guardar todos los cambios
-                    </button>
-                  )}
-                </form>
+                )}
+                {editando && (
+                  <button 
+                    onClick={handleIconClick}
+                    className="absolute -bottom-2 -right-2 p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-xl transition-all hover:scale-110 active:scale-90"
+                  >
+                    <Camera size={18} />
+                  </button>
+                )}
+                <input type="file" ref={fileInputRef} onChange={handleFotoChange} accept="image/*" className="hidden" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm h-fit">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-slate-100 rounded-lg"><Lock className="text-slate-600" size={20} /></div>
-              <h2 className="font-semibold text-slate-900">Seguridad</h2>
+          <div className="pt-20 pb-10 px-8">
+            <div className="flex justify-between items-start mb-10">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">{perfil.nombre || 'Usuario'}</h2>
+                <p className="text-blue-600 font-medium">{user?.rol === 'administrador' ? 'Administrador del Sistema' : 'Personal Docente'}</p>
+              </div>
+              <button 
+                onClick={() => setEditando(!editando)} 
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold transition-all ${
+                  editando 
+                  ? 'bg-slate-100 text-slate-600 hover:bg-slate-200' 
+                  : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+                }`}
+              >
+                {editando ? <><X size={18}/> Cancelar</> : <><User size={18}/> Editar Perfil</>}
+              </button>
             </div>
-            <p className="text-sm text-slate-500 mb-6">Gestiona el acceso a tu cuenta.</p>
-            <button disabled className="w-full py-2.5 border border-slate-200 text-slate-400 rounded-lg text-sm font-medium cursor-not-allowed">
-              Cambiar Contraseña
-            </button>
+
+            <form onSubmit={handleGuardarPerfil} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Nombre */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Nombre Completo</label>
+                <div className="relative group">
+                  <User className="absolute left-3 top-3 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20}/>
+                  <input 
+                    disabled={!editando}
+                    value={perfil.nombre}
+                    onChange={(e) => setPerfil({...perfil, nombre: e.target.value})}
+                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                  />
+                </div>
+              </div>
+
+              {/* Correo */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Correo Institucional</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 text-slate-300" size={20}/>
+                  <input 
+                    disabled
+                    value={perfil.correo}
+                    className="w-full pl-10 pr-4 py-3 bg-slate-100 border border-slate-200 rounded-2xl text-slate-500 cursor-not-allowed"
+                  />
+                </div>
+              </div>
+
+              {/* Teléfono */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Teléfono de Contacto</label>
+                <div className="relative group">
+                  <Phone className="absolute left-3 top-3 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20}/>
+                  <input 
+                    disabled={!editando}
+                    value={perfil.telefono}
+                    onChange={(e) => setPerfil({...perfil, telefono: e.target.value})}
+                    placeholder="No especificado"
+                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all disabled:opacity-60"
+                  />
+                </div>
+              </div>
+
+              {/* Área Académica */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Área / Departamento</label>
+                <div className="relative">
+                  <GraduationCap className="absolute left-3 top-3 text-slate-400" size={20}/>
+                  <input 
+                    disabled
+                    value={perfil.areaAcademica}
+                    className="w-full pl-10 pr-4 py-3 bg-slate-100 border border-slate-200 rounded-2xl text-slate-500"
+                  />
+                </div>
+              </div>
+
+              {editando && (
+                <div className="md:col-span-2 pt-6">
+                  <button 
+                    type="submit"
+                    disabled={cargando}
+                    className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-200 hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                  >
+                    {cargando ? (
+                      <div className="h-6 w-6 animate-spin rounded-full border-3 border-white border-t-transparent" />
+                    ) : (
+                      <><Save size={20} /> Guardar Cambios</>
+                    )}
+                  </button>
+                </div>
+              )}
+            </form>
           </div>
         </div>
       </div>
