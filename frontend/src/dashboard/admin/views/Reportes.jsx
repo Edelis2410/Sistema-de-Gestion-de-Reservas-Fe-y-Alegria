@@ -10,7 +10,7 @@ import autoTable from 'jspdf-autotable';
 
 const Reportes = () => {
   const [filtros, setFiltros] = useState({
-    periodo: 'todos', // 👈 Cambiado de 'mensual' a 'todos'
+    periodo: 'todos', 
     categoria: 'reservas',
     buscar: '',
   });

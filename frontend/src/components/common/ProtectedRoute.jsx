@@ -1,4 +1,4 @@
-// src/components/common/ProtectedRoute.jsx - VERSIÓN ACTUALIZADA
+// src/components/common/ProtectedRoute.jsx 
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -19,17 +19,17 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     );
   }
 
-  // Usar función de auth.js para verificar autenticación
+  // Si no está autenticado, redirigir a login 
   if (!isAuthenticated()) {
     console.log('ProtectedRoute - Usuario NO autenticado, redirigiendo a /login');
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+    return <Navigate to="/login" state={{ from: location.pathname }} />;
   }
 
   // Verificar roles permitidos
   if (allowedRoles && user.rol && !allowedRoles.includes(user.rol)) {
     console.log('ProtectedRoute - Rol no permitido:', user.rol);
     
-    // Redirigir según el rol del usuario
+    // Redirigir según el rol del usuario 
     if (user.rol === 'administrador') {
       return <Navigate to="/admin/dashboard" replace />;
     } else if (user.rol === 'docente') {

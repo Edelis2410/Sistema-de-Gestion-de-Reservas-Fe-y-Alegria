@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LogIn, Lock, Mail, User, Shield, Eye, EyeOff } from 'lucide-react';
+import { LogIn, Lock, Mail, User, Shield, Eye, EyeOff, ArrowLeft } from 'lucide-react'; // Añadido ArrowLeft
 import { useAuth } from '../contexts/AuthContext';
 import { saveAuthData } from '../utils/auth';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
@@ -39,7 +39,6 @@ const Login = () => {
     setError('');
 
     try {
-      // RESTAURADA TU RUTA ORIGINAL: /api/login
       const response = await fetch('http://localhost:5000/api/login', {
         method: 'POST',
         headers: {
@@ -58,18 +57,13 @@ const Login = () => {
         throw new Error(data.error || 'Credenciales incorrectas');
       }
 
-      // --- PERSISTENCIA PARA EVITAR PESTAÑEO ---
-      // Mantenemos tus llaves de localStorage y el orden de ejecución
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       
-      // Llamada a tu utilidad original
       saveAuthData(data.token, data.user);
       
-      // Actualizar el estado global del contexto
       await login(data.user, data.token);
 
-      // Redirección basada en tus roles originales
       const rutaDestino = data.user.rol === 'administrador' 
         ? '/admin/dashboard' 
         : '/docente/dashboard';
@@ -89,9 +83,25 @@ const Login = () => {
     }
   };
 
+  // Función para regresar al home
+  const goHome = () => {
+    navigate('/');
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md">
+        {/* Botón de regreso al home */}
+        <div className="mb-2">
+          <button
+            onClick={goHome}
+            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 mr-1" />
+            <span>Volver al inicio</span>
+          </button>
+        </div>
+
         <div className="bg-white rounded-2xl shadow-sm border border-gray-300">
           <div className="px-8 pt-8 pb-6">
             <h1 className="text-2xl font-semibold text-gray-900 text-center">Inicio de Sesión</h1>
