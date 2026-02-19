@@ -1,6 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const { enviarCorreoAprobacion, enviarCorreoRechazo, enviarCorreoModificacion } = require('../utils/mailer');
+const { enviarCorreoAprobacion, enviarCorreoRechazo, enviarCorreoModificacion, enviarCorreoNuevaSolicitud } = require('../utils/mailer');
 
 // --- 1. OBTENER TODAS LAS RESERVAS ---
 const getAllReservas = async (req, res) => {
@@ -88,7 +88,7 @@ const createReserva = async (req, res) => {
         }
         // ----------------------------------------------------
 
-        // --- VALIDACIÓN DE FECHA Y HORA PASADA (CORREGIDA) ---
+        // --- VALIDACIÓN DE FECHA Y HORA PASADA ---
         const ahora = new Date();
         const hoyStr = ahora.toLocaleDateString('en-CA'); // YYYY-MM-DD
 
@@ -114,12 +114,9 @@ const createReserva = async (req, res) => {
         }
         // ----------------------------------------------------
 
-        // --- NUEVA VALIDACIÓN: Mínimo 1 día de anticipación ---
+        // --- VALIDACIÓN: Mínimo 1 día de anticipación ---
         const fechaSolicitadaObj = new Date(fecha);
-        const fechaSolicitadaStr = fechaSolicitadaObj.toLocaleDateString('en-CA');
         const hoyStrSinHora = new Date().toLocaleDateString('en-CA');
-        
-        // Calcular diferencia en días
         const unDiaEnMs = 24 * 60 * 60 * 1000;
         const diferenciaDias = Math.round((fechaSolicitadaObj - new Date(hoyStrSinHora)) / unDiaEnMs);
 
@@ -130,7 +127,7 @@ const createReserva = async (req, res) => {
             });
         }
 
-        // --- NUEVA VALIDACIÓN: Máximo 15 días de anticipación ---
+        // --- VALIDACIÓN: Máximo 15 días de anticipación ---
         if (diferenciaDias > 15) {
             return res.status(400).json({
                 success: false,
@@ -167,6 +164,63 @@ const createReserva = async (req, res) => {
                 confirmado_por: esAdmin ? req.user.id : null 
             }
         });
+
+        // --- NOTIFICAR A LOS ADMINISTRADORES (solo si es pendiente, es decir, docente) ---
+        if (estadoFinal === 'pendiente') {
+            try {
+                // Buscar administradores activos
+                const admins = await prisma.usuario.findMany({
+                    where: {
+                        rol: { nombre: 'administrador' },
+                        activo: true
+                    },
+                    select: { id: true, email: true, nombre: true, notificacionesEmail: true, notificacionesPush: true }
+                });
+
+                // Datos adicionales
+                const espacio = await prisma.espacio.findUnique({ where: { id: parseInt(espacio_id) } });
+                const usuarioSolicitante = await prisma.usuario.findUnique({ where: { id: req.user.id } });
+
+                // Formatear fecha manualmente para evitar problemas de zona horaria
+                const [year, month, day] = fecha.split('-');
+                const fechaFormateada = `${day}/${month}/${year}`; // formato DD/MM/YYYY
+
+                for (const admin of admins) {
+                    // No notificar al propio administrador si es él quien creó (aunque en este caso no aplica porque estadoFinal es pendiente)
+                    if (admin.id === req.user.id) continue;
+
+                    // Notificación push en base de datos
+                    if (admin.notificacionesPush) {
+                        await prisma.notificacion.create({
+                            data: {
+                                usuario_id: admin.id,
+                                tipo: 'info',
+                                titulo: 'Nueva solicitud de reserva',
+                                mensaje: `El docente ${usuarioSolicitante.nombre} ha solicitado el espacio "${espacio.nombre}" para el día ${fechaFormateada}.`,
+                                leido: false,
+                                fecha_envio: new Date()
+                            }
+                        });
+                    }
+
+                    // Correo electrónico
+                    if (admin.notificacionesEmail) {
+                        await enviarCorreoNuevaSolicitud(
+                            admin.email,
+                            admin.nombre,
+                            usuarioSolicitante.nombre,
+                            espacio.nombre,
+                            fechaFormateada, // se pasa la fecha ya formateada
+                            hora_inicio,
+                            hora_fin,
+                            titulo
+                        );
+                    }
+                }
+            } catch (error) {
+                console.error("Error al notificar a administradores:", error);
+            }
+        }
 
         res.json({ success: true, data: nuevaReserva });
     } catch (error) {
@@ -216,11 +270,9 @@ const updateReserva = async (req, res) => {
                 });
             }
 
-            // NUEVA VALIDACIÓN: Mínimo 1 día de anticipación (incluso en actualización)
+            // Mínimo 1 día de anticipación
             const fechaSolicitadaObj = new Date(fecha);
-            const fechaSolicitadaStr = fechaSolicitadaObj.toLocaleDateString('en-CA');
             const hoyStrSinHora = new Date().toLocaleDateString('en-CA');
-            
             const unDiaEnMs = 24 * 60 * 60 * 1000;
             const diferenciaDias = Math.round((fechaSolicitadaObj - new Date(hoyStrSinHora)) / unDiaEnMs);
 
@@ -231,7 +283,7 @@ const updateReserva = async (req, res) => {
                 });
             }
 
-            // NUEVA VALIDACIÓN: Máximo 15 días de anticipación
+            // Máximo 15 días de anticipación
             if (diferenciaDias > 15) {
                 return res.status(400).json({
                     success: false,

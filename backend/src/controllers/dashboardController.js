@@ -90,98 +90,91 @@ exports.getDocenteStats = async (req, res) => {
     }
 };
 
-// --- 3. REPORTE ESTADÍSTICO (Módulo de Reportes) ---
+// --- 3. REPORTE ESTADÍSTICO (Módulo de Reportes) - VERSIÓN SIMPLIFICADA ---
 exports.getReporteEstadisticas = async (req, res) => {
     try {
         const { periodo } = req.query;
-        let fechaInicio, fechaFin;
+        let whereReserva = {};
+        let whereUsuario = {};
 
-        // Obtener la fecha actual en UTC (año, mes, día)
-        const ahora = new Date();
-        const hoyUTC = new Date(Date.UTC(ahora.getFullYear(), ahora.getMonth(), ahora.getDate()));
-
-        switch (periodo) {
-            case 'hoy':
-                fechaInicio = hoyUTC;
-                fechaFin = new Date(Date.UTC(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 23, 59, 59, 999));
-                break;
-            case 'semanal':
-                fechaInicio = new Date(Date.UTC(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() - 7));
-                fechaFin = new Date(Date.UTC(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 23, 59, 59, 999));
-                break;
-            case 'mensual':
-                fechaInicio = new Date(Date.UTC(ahora.getFullYear(), ahora.getMonth() - 1, ahora.getDate()));
-                fechaFin = new Date(Date.UTC(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 23, 59, 59, 999));
-                break;
-            case 'anual':
-                fechaInicio = new Date(Date.UTC(ahora.getFullYear() - 1, ahora.getMonth(), ahora.getDate()));
-                fechaFin = new Date(Date.UTC(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 23, 59, 59, 999));
-                break;
-            default:
-                fechaInicio = new Date(Date.UTC(ahora.getFullYear(), ahora.getMonth() - 1, ahora.getDate()));
-                fechaFin = new Date(Date.UTC(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 23, 59, 59, 999));
+        if (periodo === 'mensual') {
+            // Últimos 30 días desde ahora
+            const fechaLimite = new Date();
+            fechaLimite.setDate(fechaLimite.getDate() - 30);
+            whereReserva = {
+                fecha: {
+                    gte: fechaLimite
+                }
+            };
+            whereUsuario = {
+                fecha_creacion: {
+                    gte: fechaLimite
+                }
+            };
+        } else {
+            // 'todos' o cualquier otro valor: sin filtro
+            whereReserva = {};
+            whereUsuario = {};
         }
 
-        // Filtro para reservas y usuarios basado en fecha_creacion
-        const whereFecha = {
-            fecha_creacion: {
-                gte: fechaInicio,
-                lte: fechaFin
+        // --- OBTENER RESERVAS (con o sin filtro) ---
+        const reservasDb = await prisma.reserva.findMany({
+            where: whereReserva,
+            include: {
+                usuario: { select: { nombre: true } },
+                espacio: { select: { nombre: true } }
+            },
+            orderBy: { fecha: 'desc' }
+        });
+
+        // --- OBTENER TODOS LOS ESPACIOS ACTIVOS ---
+        const todosEspacios = await prisma.espacio.findMany({
+            where: { eliminado: false, activo: true },
+            select: {
+                id: true,
+                nombre: true,
+                activo: true,
+                reservas: {
+                    where: whereReserva,
+                    select: { hora_inicio: true, hora_fin: true }
+                }
             }
-        };
+        });
 
-        console.log('Periodo:', periodo);
-        console.log('fechaInicio:', fechaInicio.toISOString());
-        console.log('fechaFin:', fechaFin.toISOString());
+        // --- OBTENER USUARIOS (con o sin filtro) ---
+        const usuariosFiltrados = await prisma.usuario.findMany({
+            where: whereUsuario,
+            select: {
+                id: true,
+                nombre: true,
+                email: true,
+                fecha_creacion: true,
+                activo: true,
+                rol: { select: { nombre: true } },
+                _count: { select: { reservas: true } }
+            },
+            orderBy: { fecha_creacion: 'desc' }
+        });
 
-        // Para espacios, no filtramos por fecha_creacion (los espacios existen siempre)
-        // pero las reservas asociadas sí se filtran más adelante
-
-        const [totalUsuariosPeriodo, totalReservasPeriodo, reservasDb, usuariosDb, espaciosDb] = await Promise.all([
-            prisma.usuario.count({ where: whereFecha }), // usuarios registrados en el período
-            prisma.reserva.count({ where: whereFecha }), // reservas creadas en el período
-            prisma.reserva.findMany({
-                where: whereFecha,
-                include: { 
-                    usuario: { select: { nombre: true } }, 
-                    espacio: { select: { nombre: true } } 
-                },
-                orderBy: { fecha_creacion: 'desc' }
-            }),
-            prisma.usuario.findMany({
-                where: whereFecha, // solo usuarios creados en el período
-                select: {
-                    id: true, nombre: true, email: true, fecha_creacion: true,
-                    rol: { select: { nombre: true } },
-                    _count: { select: { reservas: true } }
-                }
-            }),
-            prisma.espacio.findMany({
-                where: { eliminado: false }, // todos los espacios activos no eliminados
-                include: { 
-                    reservas: { 
-                        select: { hora_inicio: true, hora_fin: true },
-                        where: whereFecha // solo reservas del período
-                    },
-                    _count: { select: { reservas: true } } 
-                }
-            })
-        ]);
-
-        console.log(`Reservas encontradas para ${periodo}:`, reservasDb.length);
-        console.log(`Usuarios encontrados para ${periodo}:`, usuariosDb.length);
-
+        // --- MÉTRICAS ---
+        const totalUsuariosPeriodo = usuariosFiltrados.length;
+        const totalReservasPeriodo = reservasDb.length;
         const aprobadasCount = reservasDb.filter(r => r.estado === 'confirmada').length;
         const tasaCalculada = totalReservasPeriodo > 0 ? `${Math.round((aprobadasCount / totalReservasPeriodo) * 100)}%` : "0%";
 
+        console.log(`Reservas encontradas: ${reservasDb.length}`);
+        console.log(`Usuarios encontrados: ${usuariosFiltrados.length}`);
+        console.log(`Espacios totales: ${todosEspacios.length}`);
+
+        // --- CONSTRUIR RESPUESTA ---
         res.json({
             success: true,
             data: {
-                sistema: { 
-                    totalUsuarios: totalUsuariosPeriodo, 
-                    totalEspacios: espaciosDb.length, // total de espacios (no filtrado por fecha)
-                    totalReservas: totalReservasPeriodo, 
-                    tasaConfirmadas: tasaCalculada 
+                sistema: {
+                    totalUsuarios: totalUsuariosPeriodo,
+                    totalEspacios: todosEspacios.length,
+                    totalReservas: totalReservasPeriodo,
+                    tasaConfirmadas: tasaCalculada
                 },
                 reservas: reservasDb.map(r => {
                     let duracionTexto = "N/A";
@@ -201,13 +194,16 @@ exports.getReporteEstadisticas = async (req, res) => {
                         estado: r.estado || 'pendiente'
                     };
                 }),
-                usuarios: usuariosDb.map(u => ({
-                    id: u.id, nombre: u.nombre, correo: u.email,
+                usuarios: usuariosFiltrados.map(u => ({
+                    id: u.id,
+                    nombre: u.nombre,
+                    correo: u.email,
                     fechaRegistro: u.fecha_creacion ? new Date(u.fecha_creacion).toISOString().split('T')[0] : 'N/A',
                     totalReservas: u._count.reservas,
-                    estado: 'Activo', rol: u.rol?.nombre || 'Docente'
+                    estado: u.activo ? 'Activo' : 'Inactivo',
+                    rol: u.rol?.nombre || 'Docente'
                 })),
-                espacios: espaciosDb.map(e => {
+                espacios: todosEspacios.map(e => {
                     const horasTotalesReales = e.reservas.reduce((acc, r) => {
                         if (r.hora_inicio && r.hora_fin) {
                             return acc + ((new Date(r.hora_fin) - new Date(r.hora_inicio)) / (1000 * 60 * 60));
@@ -215,12 +211,12 @@ exports.getReporteEstadisticas = async (req, res) => {
                         return acc;
                     }, 0);
                     return {
-                        id: e.id, 
+                        id: e.id,
                         espacio: e.nombre,
                         horasTotales: Math.round(horasTotalesReales * 10) / 10,
-                        porcentajeOcupacion: Math.min((e.reservas.length * 10), 100),
+                        porcentajeOcupacion: e.reservas.length > 0 ? Math.min((e.reservas.length * 10), 100) : 0,
                         numeroReservas: e.reservas.length,
-                        disponibilidad: e.reservas.length > 10 ? 'Baja' : 'Alta',
+                        disponibilidad: e.reservas.length > 10 ? 'Baja' : (e.reservas.length > 0 ? 'Media' : 'Alta'),
                         estado: e.activo ? 'Activo' : 'Inactivo'
                     };
                 })

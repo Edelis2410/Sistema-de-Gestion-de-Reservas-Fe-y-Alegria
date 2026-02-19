@@ -10,7 +10,7 @@ import autoTable from 'jspdf-autotable';
 
 const Reportes = () => {
   const [filtros, setFiltros] = useState({
-    periodo: 'mensual',
+    periodo: 'todos', // 👈 Cambiado de 'mensual' a 'todos'
     categoria: 'reservas',
     buscar: '',
   });
@@ -85,7 +85,9 @@ const Reportes = () => {
         num_reservas: esp.numeroReservas || 0,
         disponibilidad: esp.disponibilidad || 'No disponible',
         estado: esp.estado || 'Inactivo'    // ← ya viene "Activo"/"Inactivo" del backend
-      }));
+      }))
+      .sort((a, b) => a.id - b.id); // 👈 Orden ascendente
+
     } else {
       fuente = [...(datosBackend[filtros.categoria] || [])];
       fuente.sort((a, b) => (a.id || 0) - (b.id || 0));
@@ -193,6 +195,44 @@ const Reportes = () => {
     doc.save(`Reporte_${filtros.categoria.toUpperCase()}.pdf`);
   };
 
+  // Función para manejar el backup
+  const handleBackup = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/admin/backup', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      // Obtener el nombre del archivo desde los headers (incluye fecha y hora)
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = 'backup.sql';
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="?([^"]+)"?/);
+        if (match) filename = match[1];
+      }
+
+      // Convertir la respuesta a blob y descargar
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error al generar backup:', error);
+      alert('No se pudo generar el backup. Revisa la consola para más detalles.');
+    }
+  };
+
   const categorias = [
     { valor: 'reservas', etiqueta: 'Reservas' },
     { valor: 'usuarios', etiqueta: 'Usuarios' },
@@ -200,15 +240,14 @@ const Reportes = () => {
     { valor: 'sistema', etiqueta: 'Métricas del Sistema' }
   ];
 
+  // 👇 Periodos modificados: solo 'todos' y 'mensual'
   const periodos = [
-    { valor: 'hoy', etiqueta: 'Hoy' },
-    { valor: 'semanal', etiqueta: 'Semanal' },
-    { valor: 'mensual', etiqueta: 'Mensual' },
-    { valor: 'anual', etiqueta: 'Anual' }
+    { valor: 'todos', etiqueta: 'Todos' },
+    { valor: 'mensual', etiqueta: 'Mensual' }
   ];
 
   const categoriaActual = categorias.find(c => c.valor === filtros.categoria)?.etiqueta || 'Reservas';
-  const periodoActual = periodos.find(p => p.valor === filtros.periodo)?.etiqueta || 'Mensual';
+  const periodoActual = periodos.find(p => p.valor === filtros.periodo)?.etiqueta || 'Todos'; // 👈 ajustado a 'Todos'
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -220,14 +259,25 @@ const Reportes = () => {
             <h1 className="text-2xl font-bold text-slate-900">Gestión de Reportes</h1>
             <p className="text-slate-500 text-sm">Administra y exporta la información de la institución.</p>
           </div>
-          <Button 
-            variant="primary" 
-            icon={Download} 
-            onClick={exportarPDF}
-            className="bg-blue-600 hover:bg-blue-700 shadow-md transition-all active:scale-95"
-          >
-            Exportar a PDF
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="primary" 
+              icon={Download} 
+              onClick={exportarPDF}
+              className="bg-blue-600 hover:bg-blue-700 shadow-md transition-all active:scale-95"
+            >
+              Exportar a PDF
+            </Button>
+            {/* Botón de Backup */}
+            <Button 
+              variant="primary" 
+              icon={Download} 
+              onClick={handleBackup}
+              className="bg-green-600 hover:bg-green-700 shadow-md transition-all active:scale-95"
+            >
+              Backup BD
+            </Button>
+          </div>
         </div>
 
         {/* Filtros */}

@@ -4,6 +4,19 @@ import { BookOpen, Calendar, Clock, Mail, CheckCircle, AlertCircle, FileText, Do
 const GuiaReservas = () => {
   const [activeSection, setActiveSection] = useState('introduccion');
 
+  // Ruta del archivo dentro de la carpeta public
+  const PDF_URL = '/docs/manual-usuario.pdf'; 
+
+  const handleDownload = () => {
+    // Esta función fuerza la descarga en caso de usar botones
+    const link = document.createElement('a');
+    link.href = PDF_URL;
+    link.download = 'Manual_Usuario_Reservas_Fe_y_Alegria.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const sections = [
     { id: 'introduccion', title: 'Introducción', icon: <BookOpen className="w-5 h-5" /> },
     { id: 'requisitos', title: 'Requisitos', icon: <CheckCircle className="w-5 h-5" /> },
@@ -135,36 +148,92 @@ const GuiaReservas = () => {
 
       case 'politicas':
         return (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <h2 className="text-3xl font-bold text-gray-900">Políticas de Uso de Espacios</h2>
-            <div className="space-y-6">
-              {[
-                {
-                  titulo: "Uso adecuado de los espacios",
-                  contenido: "Los espacios deben utilizarse únicamente para los fines académicos, culturales o administrativos especificados en la reserva."
-                },
-                {
-                  titulo: "Responsabilidad por daños",
-                  contenido: "El solicitante es responsable de cualquier daño ocasionado al espacio o equipo durante el uso del mismo."
-                },
-                {
-                  titulo: "Limpieza y orden",
-                  contenido: "Al finalizar el evento, el espacio debe quedar en las mismas condiciones en las que fue encontrado."
-                },
-                {
-                  titulo: "Cancelaciones",
-                  contenido: "Las cancelaciones deben notificarse con al menos 24 horas de anticipación para permitir que otros puedan utilizar el espacio."
-                },
-                {
-                  titulo: "Uso fuera del horario",
-                  contenido: "El uso de espacios fuera del horario establecido requiere autorización especial de la administración."
-                }
-              ].map((politica, index) => (
-                <div key={index} className="p-6 bg-white rounded-xl border border-gray-200">
-                  <h3 className="text-xl font-semibold mb-3 text-gray-900">{politica.titulo}</h3>
-                  <p className="text-gray-600">{politica.contenido}</p>
-                </div>
-              ))}
+            
+            {/* Normas Institucionales */}
+            <div className="space-y-4">
+              <h3 className="text-2xl font-semibold text-gray-800 border-b pb-2">Normas Institucionales</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {[
+                  {
+                    titulo: "Uso adecuado de los espacios",
+                    desc: "Los espacios deben utilizarse únicamente para fines académicos, culturales o administrativos especificados en la reserva."
+                  },
+                  {
+                    titulo: "Responsabilidad por daños",
+                    desc: "El solicitante es responsable de cualquier daño ocasionado al espacio o equipo durante su uso."
+                  },
+                  {
+                    titulo: "Limpieza y orden",
+                    desc: "Al finalizar, el espacio debe quedar en las mismas condiciones en que fue encontrado."
+                  },
+                  {
+                    titulo: "Cancelaciones",
+                    desc: "Las cancelaciones deben notificarse con al menos 24 horas de anticipación para liberar el espacio."
+                  },
+                  {
+                    titulo: "Uso fuera del horario",
+                    desc: "El uso fuera del horario establecido (7:00 a.m. – 5:00 p.m.) requiere autorización especial de administración."
+                  }
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-start p-4 bg-white rounded-xl border border-gray-200">
+                    <div className="mr-4 mt-1">
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-1">{item.titulo}</h4>
+                      <p className="text-gray-600 text-sm">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Buenas Prácticas para el Uso Compartido */}
+            <div className="space-y-4">
+              <h3 className="text-2xl font-semibold text-gray-800 border-b pb-2">Buenas Prácticas para el Uso Compartido</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {[
+                  {
+                    titulo: "Planificación con antelación",
+                    desc: "Realiza tus reservas con la mayor anticipación posible (hasta 15 días) para evitar conflictos de última hora."
+                  },
+                  {
+                    titulo: "Uso necesario",
+                    desc: "Reserva únicamente los espacios que realmente necesites y por el tiempo estrictamente requerido. Evita reservar 'por si acaso'."
+                  },
+                  {
+                    titulo: "Cancelación oportuna",
+                    desc: "Si no podrás utilizar un espacio, cancela la reserva lo antes posible para que otro docente pueda aprovecharlo."
+                  },
+                  {
+                    titulo: "Rotación de espacios",
+                    desc: "Procura no acaparar un mismo espacio de forma consecutiva si hay otros usuarios que también lo necesitan."
+                  },
+                  {
+                    titulo: "Respeto por las reservas confirmadas",
+                    desc: "Una vez que el administrador confirma una reserva, el espacio queda asignado oficialmente. No realices cambios sin autorización."
+                  },
+                  {
+                    titulo: "Comunicación con el administrador",
+                    desc: "Si tienes necesidades especiales (proyectos de varios días, eventos institucionales), comunícate con el administrador para evaluar tu caso."
+                  }
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-start p-4 bg-blue-50 rounded-xl border border-blue-200">
+                    <div className="mr-4 mt-1">
+                      <CheckCircle className="w-5 h-5 text-blue-500" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-1">{item.titulo}</h4>
+                      <p className="text-gray-600 text-sm">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-sm text-gray-500 mt-2 italic">
+                El incumplimiento reiterado de estas normas podría conllevar a la restricción temporal del privilegio de reservar, a criterio del administrador.
+              </p>
             </div>
           </div>
         );
@@ -214,30 +283,6 @@ const GuiaReservas = () => {
                 </div>
               </div>
               <div className="space-y-6">
-                <div className="p-6 bg-white rounded-xl border border-gray-200">
-                  <Video className="w-8 h-8 text-primary-600 mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">Recursos Adicionales</h3>
-                  <ul className="space-y-3">
-                    <li>
-                      <a href="#" className="text-primary-600 hover:underline flex items-center">
-                        <Download className="w-4 h-4 mr-2" />
-                        Manual de usuario (PDF)
-                      </a>
-                    </li>
-                    <li>
-                      <a href="#" className="text-primary-600 hover:underline flex items-center">
-                        <Video className="w-4 h-4 mr-2" />
-                        Video tutorial del sistema
-                      </a>
-                    </li>
-                    <li>
-                      <a href="#" className="text-primary-600 hover:underline flex items-center">
-                        <FileText className="w-4 h-4 mr-2" />
-                        Formulario de solicitud especial
-                      </a>
-                    </li>
-                  </ul>
-                </div>
                 <div className="p-6 bg-primary-50 border border-primary-200 rounded-xl">
                   <h3 className="text-xl font-semibold mb-3 text-primary-800">¿Necesitas ayuda inmediata?</h3>
                   <p className="text-primary-700 mb-4">
@@ -260,7 +305,6 @@ const GuiaReservas = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section - Sin color */}
       <div className="py-12">
         <div className="max-w-7xl mx-auto px-4">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900">Guía de Reservas</h1>
@@ -270,10 +314,8 @@ const GuiaReservas = () => {
         </div>
       </div>
 
-      {/* Contenido Principal */}
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar de navegación */}
           <div className="lg:w-64 flex-shrink-0">
             <div className="sticky top-24">
               <nav className="space-y-2">
@@ -295,25 +337,22 @@ const GuiaReservas = () => {
                 ))}
               </nav>
 
-              {/* Descarga de manual */}
               <div className="mt-8 p-6 bg-white rounded-xl border border-gray-200">
                 <Download className="w-8 h-8 text-primary-600 mb-3" />
                 <h3 className="font-semibold text-gray-900 mb-2">Descarga el Manual</h3>
                 <p className="text-sm text-gray-600 mb-4">Guía completa en formato PDF</p>
-                <button className="w-full btn-primary py-2">
+                <button onClick={handleDownload} className="w-full bg-primary-600 hover:bg-primary-700 text-white py-2 rounded-lg transition-colors">
                   Descargar PDF
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Contenido de la sección */}
           <div className="flex-1">
             <div className="bg-white rounded-2xl shadow-lg p-8">
               {renderSectionContent()}
             </div>
 
-            {/* Sección de ayuda rápida */}
             <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200">
                 <Clock className="w-8 h-8 text-blue-600 mb-4" />
@@ -324,7 +363,7 @@ const GuiaReservas = () => {
               <div className="p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
                 <CheckCircle className="w-8 h-8 text-green-600 mb-4" />
                 <h3 className="font-semibold text-gray-900 mb-2">Reservas Activas</h3>
-                <p className="text-gray-600">Puedes tener hasta 3 reservas activas simultáneamente</p>
+                <p className="text-gray-600">Puedes realizar varias reservas, siempre que no existan conflictos de horario y cumplas las políticas de uso.</p>
               </div>
               <div className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200">
                 <AlertCircle className="w-8 h-8 text-purple-600 mb-4" />

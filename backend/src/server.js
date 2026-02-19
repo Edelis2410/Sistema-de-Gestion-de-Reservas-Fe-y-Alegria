@@ -1,4 +1,6 @@
 process.env.TZ = "America/Caracas";
+require('dotenv').config(); // Carga las variables de entorno desde .env
+
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const cors = require('cors');
@@ -10,13 +12,20 @@ const app = express();
 const SECRET_KEY = 'tu_clave_secreta_aqui';
 
 // --- IMPORTACIÓN DE TUS MÓDULOS ---
-// ✅ Se eliminó enviarCorreoRecordatorio de aquí
 const { enviarCorreoAprobacion, enviarCorreoRechazo, enviarCorreoModificacion } = require('./utils/mailer');
 const reservaController = require('./controllers/reservaController');
 const usuarioController = require('./controllers/usuarioController');
 const espacioController = require('./controllers/espacioController');
 const dashboardController = require('./controllers/dashboardController');
 const notificacionController = require('./controllers/notificacionController');
+
+
+// Importar middlewares de autenticación
+const { authMiddleware, roleMiddleware } = require('./middleware/authMiddleware');
+
+
+// Importar rutas de backup
+const backupRoutes = require('./routes/backupRoutes');
 
 app.use(cors());
 
@@ -79,7 +88,8 @@ app.put('/api/notificaciones/read-all', authenticateToken, notificacionControlle
 
 app.get('/api/health', (req, res) => res.json({ success: true, status: 'ok' }));
 
-// ✅ SE ELIMINÓ TODA LA TAREA PROGRAMADA (CRON JOB) DE AQUÍ
+// Rutas de backup (solo administradores)
+app.use('/api/admin', backupRoutes);
 
 app.use('*', (req, res) => res.status(404).json({ success: false, error: 'Ruta no encontrada' }));
 

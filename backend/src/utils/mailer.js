@@ -111,14 +111,63 @@ transporter.verify((error, success) => {
     }
 });
 
-module.exports = transporter;
+
+// 5. NUEVA FUNCIÓN: Enviar correo con archivo adjunto (para backups)
+const enviarCorreoConAdjunto = async ({ to, subject, text, attachments }) => {
+  const mailOptions = {
+    from: '"Sistema de Reservas" <sistemareserva.feyalegria2026@gmail.com>',
+    to,
+    subject,
+    text,
+    attachments
+  };
+  return transporter.sendMail(mailOptions);
+};
+
+// Verificar conexión
+transporter.verify((error, success) => {
+    if (error) {
+        console.error('Error en la configuración del correo:', error);
+    } else {
+        console.log('✅ Servidor de correos listo para enviar mensajes');
+    }
+});
+
+// 6. Función para notificar a administradores sobre nueva solicitud de reserva
+const enviarCorreoNuevaSolicitud = async (emailAdmin, nombreAdmin, nombreDocente, nombreEspacio, fechaFormateada, horaInicio, horaFin, titulo) => {
+  const mailOptions = {
+    from: '"Sistema de Reservas" <sistemareserva.feyalegria2026@gmail.com>',
+    to: emailAdmin,
+    subject: '📋 Nueva solicitud de reserva pendiente',
+    html: `
+      <div style="font-family: Arial, sans-serif; color: #333;">
+        <h2>Hola, ${nombreAdmin}</h2>
+        <p>Se ha registrado una nueva solicitud de reserva que requiere tu atención.</p>
+        
+        <div style="background-color: #f8fafc; border-left: 4px solid #3b82f6; padding: 20px; margin: 20px 0; border-radius: 4px;">
+          <p><strong>Docente:</strong> ${nombreDocente}</p>
+          <p><strong>Espacio:</strong> ${nombreEspacio}</p>
+          <p><strong>Fecha:</strong> ${fechaFormateada}</p>
+          <p><strong>Horario:</strong> ${horaInicio} - ${horaFin}</p>
+          <p><strong>Título:</strong> ${titulo}</p>
+        </div>
+
+        <p>Ingresa al panel de administración para <strong>aprobar o rechazar</strong> esta solicitud.</p>
+        <br>
+        <p>Saludos,<br>Sistema de Reservas</p>
+      </div>
+    `
+  };
+
+  return transporter.sendMail(mailOptions);
+};
 
 
-// 4. EXPORTAR LAS FUNCIONES 
 module.exports = {
   transporter,
   enviarCorreoAprobacion,
   enviarCorreoRechazo,
-  enviarCorreoModificacion
-  
+  enviarCorreoModificacion,
+  enviarCorreoConAdjunto,
+  enviarCorreoNuevaSolicitud
 };

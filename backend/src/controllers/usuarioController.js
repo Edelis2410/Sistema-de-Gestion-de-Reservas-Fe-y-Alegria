@@ -7,6 +7,18 @@ const { transporter } = require('../utils/mailer');
 // La clave ahora se toma de las variables de entorno para mayor seguridad
 const SECRET_KEY = process.env.SECRET_KEY || 'tu_clave_secreta_aqui';
 
+// --- Función auxiliar para contar administradores activos (opcionalmente excluyendo un ID) ---
+const contarAdminsActivos = async (excluirId = null) => {
+  const where = {
+    rol: { nombre: 'administrador' },
+    activo: true
+  };
+  if (excluirId) {
+    where.id = { not: excluirId };
+  }
+  return await prisma.usuario.count({ where });
+};
+
 // --- 1. LOGIN ---
 exports.login = async (req, res) => {
     const { email, password, rolSeleccionado } = req.body;
@@ -90,7 +102,7 @@ exports.verifyToken = async (req, res) => {
     }
 };
 
-// --- 3. ACTUALIZAR PREFERENCIAS (LIMPIADO) ---
+// --- 3. ACTUALIZAR PREFERENCIAS  ---
 exports.actualizarPreferencias = async (req, res) => {
     try {
         const p = req.body;
@@ -186,6 +198,23 @@ exports.crearUsuario = async (req, res) => {
 
         const { nombre, email, password, rol_id, activo } = req.body;
 
+        // --- VALIDACIÓN LÍMITE DE ADMINISTRADORES ---
+        const rolAdmin = await prisma.rol.findUnique({ where: { nombre: 'administrador' } });
+        if (!rolAdmin) {
+            return res.status(500).json({ success: false, error: 'Error interno: rol administrador no encontrado' });
+        }
+
+        // Si el nuevo usuario será administrador activo, verificar límite
+        if (parseInt(rol_id) === rolAdmin.id && (activo === undefined || activo === true)) {
+            const adminsActivos = await contarAdminsActivos();
+            if (adminsActivos >= 4) {
+                return res.status(400).json({ 
+                    success: false, 
+                    error: 'No se puede crear otro administrador. Límite máximo de 4 administradores activos alcanzado.' 
+                });
+            }
+        }
+
         const salt = await bcrypt.genSalt(10);
         const password_hash = await bcrypt.hash(password, salt);
 
@@ -223,6 +252,39 @@ exports.updateUsuario = async (req, res) => {
     const { nombre, email, rol_id, activo } = req.body;
     
     try {
+        // Obtener usuario actual
+        const usuarioActual = await prisma.usuario.findUnique({
+            where: { id: parseInt(id) },
+            include: { rol: true }
+        });
+        if (!usuarioActual) {
+            return res.status(404).json({ success: false, error: 'Usuario no encontrado' });
+        }
+
+        // Obtener rol administrador
+        const rolAdmin = await prisma.rol.findUnique({ where: { nombre: 'administrador' } });
+        if (!rolAdmin) {
+            return res.status(500).json({ success: false, error: 'Error interno: rol administrador no encontrado' });
+        }
+
+        // Determinar el estado final después de la actualización
+        const rolFinal = rol_id !== undefined ? parseInt(rol_id) : usuarioActual.rol_id;
+        const activoFinal = activo !== undefined ? activo : usuarioActual.activo;
+
+        // Si el resultado será administrador activo, verificar límite
+        if (rolFinal === rolAdmin.id && activoFinal === true) {
+            // Contar administradores activos excluyendo al usuario actual si ya es administrador activo
+            const excluirId = (usuarioActual.rol_id === rolAdmin.id && usuarioActual.activo === true) ? usuarioActual.id : null;
+            const adminsActivos = await contarAdminsActivos(excluirId);
+            if (adminsActivos >= 4) {
+                return res.status(400).json({ 
+                    success: false, 
+                    error: 'No se puede actualizar: se alcanzaría el límite máximo de 4 administradores activos.' 
+                });
+            }
+        }
+
+        // Proceder con la actualización
         const actualizado = await prisma.usuario.update({
             where: { id: parseInt(id) },
             data: {
@@ -232,8 +294,10 @@ exports.updateUsuario = async (req, res) => {
                 activo
             }
         });
+
         res.json({ success: true, data: actualizado });
     } catch (e) {
+        console.error("Error al actualizar usuario:", e);
         res.status(500).json({ success: false, error: 'No se pudo actualizar el usuario' });
     }
 };
@@ -316,6 +380,6 @@ exports.resetPassword = async (req, res) => {
 
         res.json({ success: true, message: 'Contraseña actualizada correctamente' });
     } catch (error) {
-        res.status(400).json({ success: false, error: 'El enlace es inválido o ha expirado' });
+        res.status(400).json({ success: false, error: 'El enlace es válido o ha expirado' });
     }
 };

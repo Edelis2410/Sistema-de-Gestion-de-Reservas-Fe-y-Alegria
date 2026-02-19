@@ -4,13 +4,13 @@ import { Bell, Mail, Save, RefreshCw, User } from 'lucide-react';
 const Configuracion = () => {
   const [config, setConfig] = useState({
     notificacionesEmail: true,
-    notificacionesPush: true,
-    recordatorioReserva: true
+    notificacionesPush: true
+    
   });
 
   const [mensaje, setMensaje] = useState({ texto: '', tipo: '' });
   const [cargando, setCargando] = useState(false);
-  const [loadingPrefs, setLoadingPrefs] = useState(true); // Nuevo estado para carga inicial
+  const [loadingPrefs, setLoadingPrefs] = useState(true);
 
   useEffect(() => {
     const cargarPreferencias = async () => {
@@ -29,12 +29,16 @@ const Configuracion = () => {
         const data = await response.json();
         
         if (data.success && data.user && data.user.preferencias) {
-          setConfig(prev => ({ ...prev, ...data.user.preferencias }));
+          // Solo actualizamos las claves que existen en el estado
+          setConfig(prev => ({
+            notificacionesEmail: data.user.preferencias.notificacionesEmail ?? prev.notificacionesEmail,
+            notificacionesPush: data.user.preferencias.notificacionesPush ?? prev.notificacionesPush
+          }));
         }
       } catch (error) {
         console.error("Error al cargar:", error);
       } finally {
-        setLoadingPrefs(false); // Finaliza la carga
+        setLoadingPrefs(false);
       }
     };
     cargarPreferencias();
@@ -83,8 +87,7 @@ const Configuracion = () => {
     if (window.confirm('¿Deseas restablecer los valores por defecto?')) {
       setConfig({
         notificacionesEmail: true,
-        notificacionesPush: true,
-        recordatorioReserva: true
+        notificacionesPush: true
       });
       setMensaje({ texto: 'Valores restablecidos. Haz clic en Guardar.', tipo: 'success' });
       setTimeout(() => setMensaje({ texto: '', tipo: '' }), 3000);
@@ -116,7 +119,6 @@ const Configuracion = () => {
     </div>
   );
 
-  // Esqueleto de carga para los switches
   const SkeletonSwitch = () => (
     <div className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-4 py-3 animate-pulse">
       <div className="flex items-center gap-3">
@@ -172,26 +174,6 @@ const Configuracion = () => {
                   <SwitchRow icon={Mail} label="Notificaciones por correo" desc="Alertas al email." configKey="notificacionesEmail" />
                   <SwitchRow icon={Bell} label="Notificaciones push" desc="Avisos en el sistema." configKey="notificacionesPush" />
                 </>
-              )}
-            </div>
-          </section>
-
-          {/* Sección: Alertas */}
-          <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-4">
-              <div className="rounded-lg bg-blue-50 p-2">
-                <Bell className="h-5 w-5 text-blue-700" />
-              </div>
-              <div>
-                <h2 className="text-sm font-semibold text-slate-900">Alertas específicas</h2>
-                <p className="text-xs text-slate-500">Configura cuándo quieres ser avisado.</p>
-              </div>
-            </div>
-            <div className="p-5 space-y-3">
-              {loadingPrefs ? (
-                <SkeletonSwitch />
-              ) : (
-                <SwitchRow label="Recordatorio diario" desc="Recibir un email a las 7:00 AM el día de tu reserva." configKey="recordatorioReserva" />
               )}
             </div>
           </section>
