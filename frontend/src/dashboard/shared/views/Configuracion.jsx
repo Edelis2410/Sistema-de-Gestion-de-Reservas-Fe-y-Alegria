@@ -5,7 +5,6 @@ const Configuracion = () => {
   const [config, setConfig] = useState({
     notificacionesEmail: true,
     notificacionesPush: true
-    
   });
 
   const [mensaje, setMensaje] = useState({ texto: '', tipo: '' });
@@ -29,7 +28,6 @@ const Configuracion = () => {
         const data = await response.json();
         
         if (data.success && data.user && data.user.preferencias) {
-          // Solo actualizamos las claves que existen en el estado
           setConfig(prev => ({
             notificacionesEmail: data.user.preferencias.notificacionesEmail ?? prev.notificacionesEmail,
             notificacionesPush: data.user.preferencias.notificacionesPush ?? prev.notificacionesPush
@@ -135,69 +133,87 @@ const Configuracion = () => {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-6 text-left">
-      <div className="mx-auto max-w-4xl space-y-6">
-        
-        <header>
-          <h1 className="text-2xl font-semibold text-slate-900">Configuración</h1>
-          <p className="mt-1 text-sm text-slate-500">Ajusta tus preferencias de notificaciones.</p>
-        </header>
+    <div className="w-full">
+      {/* HEADER (igual que en Inicio/Dashboard) */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-slate-900">Configuración</h1>
+        <p className="mt-1 text-sm text-slate-500">
+          Ajusta tus preferencias de notificaciones.
+        </p>
+      </div>
 
-        {mensaje.texto && (
-          <div className={`rounded-lg border px-4 py-3 text-sm animate-in fade-in duration-300 ${
-            mensaje.tipo === 'success' ? 'border-blue-100 bg-blue-50 text-blue-800' : 'border-red-100 bg-red-50 text-red-800'
-          }`}>
+      {/* MENSAJE DE RETROALIMENTACIÓN */}
+      {mensaje.texto && (
+        <div className="mb-8">
+          <div
+            className={`rounded-lg border px-4 py-3 text-sm animate-in fade-in duration-300 ${
+              mensaje.tipo === 'success'
+                ? 'border-blue-100 bg-blue-50 text-blue-800'
+                : 'border-red-100 bg-red-50 text-red-800'
+            }`}
+          >
             {mensaje.texto}
           </div>
-        )}
-
-        <div className="space-y-6">
-          {/* Sección: Canales de comunicación */}
-          <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-4">
-              <div className="rounded-lg bg-blue-50 p-2">
-                <User className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <h2 className="text-sm font-semibold text-slate-900">Canales de comunicación</h2>
-                <p className="text-xs text-slate-500">¿Por dónde quieres recibir alertas?</p>
-              </div>
-            </div>
-            <div className="p-5 space-y-3">
-              {loadingPrefs ? (
-                <>
-                  <SkeletonSwitch />
-                  <SkeletonSwitch />
-                </>
-              ) : (
-                <>
-                  <SwitchRow icon={Mail} label="Notificaciones por correo" desc="Alertas al email." configKey="notificacionesEmail" />
-                  <SwitchRow icon={Bell} label="Notificaciones push" desc="Avisos en el sistema." configKey="notificacionesPush" />
-                </>
-              )}
-            </div>
-          </section>
-
-          {/* Botones centrados */}
-          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row pt-4">
-            <button
-              onClick={restablecerConfiguracion}
-              className="flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-6 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition-colors"
-            >
-              <RefreshCw className="h-4 w-4" />
-              Restablecer
-            </button>
-            <button
-              onClick={guardarConfiguracion}
-              disabled={cargando}
-              className={`flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-8 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors ${cargando ? 'opacity-50' : ''}`}
-            >
-              <Save className="h-4 w-4" />
-              {cargando ? 'Guardando...' : 'Guardar cambios'}
-            </button>
-          </div>
         </div>
+      )}
 
+      {/* TARJETA DE CONFIGURACIÓN */}
+      <div className="mb-8">
+        <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-4">
+            <div className="rounded-lg bg-blue-50 p-2">
+              <User className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900">Canales de comunicación</h2>
+              <p className="text-xs text-slate-500">¿Por dónde quieres recibir alertas?</p>
+            </div>
+          </div>
+          <div className="p-5 space-y-3">
+            {loadingPrefs ? (
+              <>
+                <SkeletonSwitch />
+                <SkeletonSwitch />
+              </>
+            ) : (
+              <>
+                <SwitchRow
+                  icon={Mail}
+                  label="Notificaciones por correo"
+                  desc="Alertas al email."
+                  configKey="notificacionesEmail"
+                />
+                <SwitchRow
+                  icon={Bell}
+                  label="Notificaciones push"
+                  desc="Avisos en el sistema."
+                  configKey="notificacionesPush"
+                />
+              </>
+            )}
+          </div>
+        </section>
+      </div>
+
+      {/* BOTONES DE ACCIÓN */}
+      <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+        <button
+          onClick={restablecerConfiguracion}
+          className="flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-6 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition-colors"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Restablecer
+        </button>
+        <button
+          onClick={guardarConfiguracion}
+          disabled={cargando}
+          className={`flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-8 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors ${
+            cargando ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+        >
+          <Save className="h-4 w-4" />
+          {cargando ? 'Guardando...' : 'Guardar cambios'}
+        </button>
       </div>
     </div>
   );

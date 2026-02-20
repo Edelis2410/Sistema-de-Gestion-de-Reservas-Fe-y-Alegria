@@ -172,13 +172,17 @@ const ListarReservas = () => {
   if (loading) return <div className="p-8 text-center text-slate-500 font-medium">Cargando solicitudes...</div>;
 
   return (
-    <div className="p-6 relative">
-      <div className="mb-6">
+    <div className="w-full">
+      {/* HEADER (igual que en Inicio/Dashboard) */}
+      <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-900">Gestión de Solicitudes</h1>
-        <p className="text-slate-500 text-sm">Administra las reservas del personal docente.</p>
+        <p className="mt-1 text-sm text-slate-500">
+          Administra las reservas del personal docente.
+        </p>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      {/* TABLA DE SOLICITUDES */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead className="bg-slate-50 border-b border-slate-200">

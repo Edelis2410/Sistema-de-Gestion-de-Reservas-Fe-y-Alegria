@@ -67,165 +67,167 @@ const createReserva = async (req, res) => {
     try {
         const { titulo, fecha, hora_inicio, hora_fin, espacio_id } = req.body;
 
-        // --- VALIDACIÓN DE DURACIÓN (Mínimo 1h, Máximo 4h) ---
+        // --- VALIDACIÓN DE CAMPOS OBLIGATORIOS ---
+        if (!titulo || !fecha || !hora_inicio || !hora_fin || !espacio_id) {
+            return res.status(400).json({ success: false, error: 'Todos los campos son obligatorios' });
+        }
+
+        // --- CONVERSIÓN DE HORAS (para cálculos) ---
         const inicioDate = new Date(`1970-01-01T${hora_inicio}:00.000Z`);
         const finDate = new Date(`1970-01-01T${hora_fin}:00.000Z`);
-        
+
+        if (isNaN(inicioDate.getTime()) || isNaN(finDate.getTime())) {
+            return res.status(400).json({ success: false, error: 'Formato de hora inválido' });
+        }
+
+        // --- VALIDACIÓN DE DURACIÓN (1h - 4h) ---
         const duracionHoras = (finDate - inicioDate) / (1000 * 60 * 60);
-
         if (duracionHoras > 4) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'No puedes reservar por más de 4 horas.' 
-            });
+            return res.status(400).json({ success: false, error: 'No puedes reservar por más de 4 horas.' });
         }
-
         if (duracionHoras < 1) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'La reserva debe ser de al menos 1 hora.' 
-            });
-        }
-        // ----------------------------------------------------
-
-        // --- VALIDACIÓN DE FECHA Y HORA PASADA ---
-        const ahora = new Date();
-        const hoyStr = ahora.toLocaleDateString('en-CA'); // YYYY-MM-DD
-
-        if (fecha < hoyStr) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'No se pueden realizar reservas en fechas pasadas.' 
-            });
+            return res.status(400).json({ success: false, error: 'La reserva debe ser de al menos 1 hora.' });
         }
 
-        // Si es hoy, validar que la hora de inicio no sea pasada
+        // --- VALIDACIÓN DE HORARIO PERMITIDO (7am - 5pm) ---
+        const [hInicio, mInicio] = hora_inicio.split(':').map(Number);
+        const [hFin, mFin] = hora_fin.split(':').map(Number);
+
+        if (hInicio < 7 || hFin > 17 || (hFin === 17 && mFin > 0)) {
+            return res.status(400).json({ success: false, error: 'El horario permitido es de 7:00 AM a 5:00 PM.' });
+        }
+
+        // --- VALIDACIÓN DE FECHA ---
+        const fechaObj = new Date(fecha);
+        fechaObj.setUTCHours(0, 0, 0, 0); // Normalizar a UTC medianoche
+
+        const hoy = new Date();
+        hoy.setUTCHours(0, 0, 0, 0);
+
+        if (fechaObj < hoy) {
+            return res.status(400).json({ success: false, error: 'No se pueden realizar reservas en fechas pasadas.' });
+        }
+
+        // Días de diferencia (redondeo exacto)
+        const diffTime = fechaObj.getTime() - hoy.getTime();
+        const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 1) {
+            return res.status(400).json({ success: false, error: 'La reserva debe realizarse con al menos 1 día de anticipación.' });
+        }
+        if (diffDays > 15) {
+            return res.status(400).json({ success: false, error: 'Solo puedes reservar con un máximo de 15 días de anticipación.' });
+        }
+
+        // --- VALIDACIÓN DE HORA ACTUAL (si es hoy) ---
+        const hoyStr = hoy.toISOString().split('T')[0];
         if (fecha === hoyStr) {
-            const [hInicio, mInicio] = hora_inicio.split(':').map(Number);
-            const horaActual = ahora.getHours();
-            const minutosActuales = ahora.getMinutes();
-
-            if (hInicio < horaActual || (hInicio === horaActual && mInicio < minutosActuales)) {
-                return res.status(400).json({
-                    success: false,
-                    error: 'La hora de inicio seleccionada ya ha pasado.'
-                });
+            const ahora = new Date();
+            if (hInicio < ahora.getHours() || (hInicio === ahora.getHours() && mInicio < ahora.getMinutes())) {
+                return res.status(400).json({ success: false, error: 'La hora de inicio seleccionada ya ha pasado.' });
             }
         }
-        // ----------------------------------------------------
 
-        // --- VALIDACIÓN: Mínimo 1 día de anticipación ---
-        const fechaSolicitadaObj = new Date(fecha);
-        const hoyStrSinHora = new Date().toLocaleDateString('en-CA');
-        const unDiaEnMs = 24 * 60 * 60 * 1000;
-        const diferenciaDias = Math.round((fechaSolicitadaObj - new Date(hoyStrSinHora)) / unDiaEnMs);
-
-        if (diferenciaDias < 1) {
-            return res.status(400).json({
-                success: false,
-                error: 'La reserva debe realizarse con al menos 1 día de anticipación. No puedes reservar para el día de hoy.'
-            });
-        }
-
-        // --- VALIDACIÓN: Máximo 15 días de anticipación ---
-        if (diferenciaDias > 15) {
-            return res.status(400).json({
-                success: false,
-                error: 'Solo puedes reservar con un máximo de 15 días de anticipación.'
-            });
-        }
-        // ----------------------------------------------------
-
-        const rolUsuario = req.user.rol ? req.user.rol.toLowerCase().trim() : '';
-        const esAdmin = (rolUsuario === 'administrador' || rolUsuario === 'admin');
+        // --- DETERMINAR ESTADO SEGÚN ROL ---
+        const esAdmin = req.user.rol === 'administrador';
         const estadoFinal = esAdmin ? 'confirmada' : 'pendiente';
 
-        const [hInicioStr, mInicioStr] = hora_inicio.split(':').map(Number);
-        const [hFinStr, mFinStr] = hora_fin.split(':').map(Number);
-        const esHoraInvalida = hInicioStr < 7 || hFinStr > 17 || (hFinStr === 17 && mFinStr > 0);
-
-        if (esHoraInvalida) {
-            return res.status(400).json({ 
-                success: false, 
-                error: 'El horario permitido es de 7:00 AM a 5:00 PM.' 
+        // --- TRANSACCIÓN: VERIFICAR DISPONIBILIDAD Y CREAR ---
+        const nuevaReserva = await prisma.$transaction(async (tx) => {
+            // Buscar reservas que se solapen en el mismo espacio/fecha (excluyendo canceladas/rechazadas)
+            const conflictos = await tx.reserva.findMany({
+                where: {
+                    espacio_id: parseInt(espacio_id),
+                    fecha: fechaObj,
+                    estado: { notIn: ['cancelada', 'rechazada'] },
+                    AND: [
+                        { hora_inicio: { lt: finDate } },
+                        { hora_fin: { gt: inicioDate } }
+                    ]
+                }
             });
-        }
 
-        const nuevaReserva = await prisma.reserva.create({
-            data: {
-                titulo,
-                fecha: new Date(fecha),
-                hora_inicio: inicioDate,
-                hora_fin: finDate,
-                usuario_id: req.user.id,
-                espacio_id: parseInt(espacio_id),
-                estado: estadoFinal,
-                creado_por_admin: esAdmin,
-                confirmado_por: esAdmin ? req.user.id : null 
+            if (conflictos.length > 0) {
+                throw new Error('El espacio no está disponible en ese horario');
             }
+
+            // Crear la reserva
+            return await tx.reserva.create({
+                data: {
+                    titulo,
+                    fecha: fechaObj,
+                    hora_inicio: inicioDate,
+                    hora_fin: finDate,
+                    usuario_id: req.user.id,
+                    espacio_id: parseInt(espacio_id),
+                    estado: estadoFinal,
+                    creado_por_admin: esAdmin,
+                    confirmado_por: esAdmin ? req.user.id : null
+                }
+            });
         });
 
-        // --- NOTIFICAR A LOS ADMINISTRADORES (solo si es pendiente, es decir, docente) ---
+        // --- NOTIFICACIONES ASÍNCRONAS (sin bloquear la respuesta) ---
         if (estadoFinal === 'pendiente') {
-            try {
-                // Buscar administradores activos
-                const admins = await prisma.usuario.findMany({
-                    where: {
-                        rol: { nombre: 'administrador' },
-                        activo: true
-                    },
-                    select: { id: true, email: true, nombre: true, notificacionesEmail: true, notificacionesPush: true }
-                });
+            setImmediate(async () => {
+                try {
+                    const admins = await prisma.usuario.findMany({
+                        where: {
+                            rol: { nombre: 'administrador' },
+                            activo: true
+                        },
+                        select: { id: true, email: true, nombre: true, notificacionesEmail: true, notificacionesPush: true }
+                    });
 
-                // Datos adicionales
-                const espacio = await prisma.espacio.findUnique({ where: { id: parseInt(espacio_id) } });
-                const usuarioSolicitante = await prisma.usuario.findUnique({ where: { id: req.user.id } });
+                    const espacio = await prisma.espacio.findUnique({ where: { id: parseInt(espacio_id) } });
+                    const usuarioSolicitante = await prisma.usuario.findUnique({ where: { id: req.user.id } });
 
-                // Formatear fecha manualmente para evitar problemas de zona horaria
-                const [year, month, day] = fecha.split('-');
-                const fechaFormateada = `${day}/${month}/${year}`; // formato DD/MM/YYYY
+                    const [year, month, day] = fecha.split('-');
+                    const fechaFormateada = `${day}/${month}/${year}`;
 
-                for (const admin of admins) {
-                    // No notificar al propio administrador si es él quien creó (aunque en este caso no aplica porque estadoFinal es pendiente)
-                    if (admin.id === req.user.id) continue;
+                    for (const admin of admins) {
+                        if (admin.id === req.user.id) continue;
 
-                    // Notificación push en base de datos
-                    if (admin.notificacionesPush) {
-                        await prisma.notificacion.create({
-                            data: {
-                                usuario_id: admin.id,
-                                tipo: 'info',
-                                titulo: 'Nueva solicitud de reserva',
-                                mensaje: `El docente ${usuarioSolicitante.nombre} ha solicitado el espacio "${espacio.nombre}" para el día ${fechaFormateada}.`,
-                                leido: false,
-                                fecha_envio: new Date()
-                            }
-                        });
+                        if (admin.notificacionesPush) {
+                            await prisma.notificacion.create({
+                                data: {
+                                    usuario_id: admin.id,
+                                    tipo: 'info',
+                                    titulo: 'Nueva solicitud de reserva',
+                                    mensaje: `El docente ${usuarioSolicitante.nombre} ha solicitado el espacio "${espacio.nombre}" para el día ${fechaFormateada}.`,
+                                    leido: false,
+                                    fecha_envio: new Date()
+                                }
+                            });
+                        }
+
+                        if (admin.notificacionesEmail) {
+                            await enviarCorreoNuevaSolicitud(
+                                admin.email,
+                                admin.nombre,
+                                usuarioSolicitante.nombre,
+                                espacio.nombre,
+                                fechaFormateada,
+                                hora_inicio,
+                                hora_fin,
+                                titulo
+                            );
+                        }
                     }
-
-                    // Correo electrónico
-                    if (admin.notificacionesEmail) {
-                        await enviarCorreoNuevaSolicitud(
-                            admin.email,
-                            admin.nombre,
-                            usuarioSolicitante.nombre,
-                            espacio.nombre,
-                            fechaFormateada, // se pasa la fecha ya formateada
-                            hora_inicio,
-                            hora_fin,
-                            titulo
-                        );
-                    }
+                } catch (error) {
+                    console.error("Error al notificar a administradores:", error);
                 }
-            } catch (error) {
-                console.error("Error al notificar a administradores:", error);
-            }
+            });
         }
 
         res.json({ success: true, data: nuevaReserva });
     } catch (error) {
-        console.error("Error al crear reserva:", error);
-        res.status(500).json({ success: false, error: 'Error al crear reserva' });
+        console.error("Error en createReserva:", error);
+        if (error.message === 'El espacio no está disponible en ese horario') {
+            return res.status(409).json({ success: false, error: error.message });
+        }
+        // Error genérico (posiblemente de validación o base de datos)
+        res.status(500).json({ success: false, error: 'Error interno al crear la reserva' });
     }
 };
 

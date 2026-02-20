@@ -22,6 +22,65 @@ const Header = ({
   const userMenuRef = useRef(null);
   const notificationsRef = useRef(null);
 
+  // --- FUNCIÓN PARA NORMALIZAR TEXTO (quitar tildes y minúsculas) ---
+  const normalizeText = (text) => {
+    return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  };
+
+  // --- MAPEO DE PALABRAS CLAVE A RUTAS (CORREGIDO: separar inicio y dashboard) ---
+  const routeMappings = {
+    administrador: [
+      { keywords: ['inicio'], path: '/admin/inicio' },                // Ahora "inicio" va a /admin/inicio
+      { keywords: ['dashboard', 'panel'], path: '/admin/dashboard' }, // "dashboard" o "panel" van a /admin/dashboard
+      { keywords: ['espacios', 'espacio', 'salones', 'aulas', 'lugares'], path: '/admin/espacios' },
+      { keywords: ['reservas', 'solicitudes', 'pendientes'], path: '/admin/reservas-listar' },
+      { keywords: ['crear reserva', 'nueva reserva', 'agregar reserva'], path: '/admin/reservas/crear' },
+      { keywords: ['historial reservas', 'historial', 'reservas anteriores'], path: '/admin/reservas/historial' },
+      { keywords: ['usuarios', 'docentes', 'administradores', 'lista usuarios'], path: '/admin/usuarios-listar' },
+      { keywords: ['crear usuario', 'nuevo usuario', 'agregar usuario'], path: '/admin/usuarios-agregar' },
+      { keywords: ['reportes', 'estadísticas', 'métricas', 'informes'], path: '/admin/reportes' },
+      { keywords: ['configuración', 'configuracion', 'ajustes', 'preferencias'], path: '/admin/configuracion' },
+      { keywords: ['perfil', 'mi cuenta', 'cuenta'], path: '/admin/account' },
+      { keywords: ['ayuda', 'faq', 'soporte', 'preguntas'], path: '/admin/help' },
+    ],
+    docente: [
+      { keywords: ['inicio'], path: '/docente/inicio' },                // "inicio" a /docente/inicio
+      { keywords: ['dashboard', 'panel'], path: '/docente/dashboard' }, // "dashboard" a /docente/dashboard
+      { keywords: ['espacios', 'espacio', 'salones', 'aulas', 'lugares'], path: '/docente/espacios' },
+      { keywords: ['crear reserva', 'nueva reserva', 'agregar reserva', 'reservar'], path: '/docente/reservas/crear' },
+      { keywords: ['historial reservas', 'historial', 'mis reservas', 'reservas anteriores'], path: '/docente/reservas/historial' },
+      { keywords: ['configuración', 'configuracion', 'ajustes', 'preferencias'], path: '/docente/configuracion' },
+      { keywords: ['perfil', 'mi cuenta', 'cuenta'], path: '/docente/account' },
+      { keywords: ['ayuda', 'faq', 'soporte', 'preguntas'], path: '/docente/help' },
+    ]
+  };
+
+  // --- HANDLER DE BÚSQUEDA ---
+  const handleSearch = (e) => {
+    e.preventDefault();
+
+    if (!searchQuery.trim() || !user) return;
+
+    const query = normalizeText(searchQuery.trim());
+    const role = user.rol === 'administrador' ? 'administrador' : 'docente';
+    const mappings = routeMappings[role];
+
+    // Buscar coincidencia: que alguna palabra clave contenga la consulta o viceversa
+    const match = mappings.find(item => 
+      item.keywords.some(keyword => {
+        const normalizedKeyword = normalizeText(keyword);
+        return normalizedKeyword.includes(query) || query.includes(normalizedKeyword);
+      })
+    );
+
+    if (match) {
+      navigate(match.path);
+      setSearchQuery('');
+    } else {
+      alert('No se encontró una sección relacionada con tu búsqueda. Prueba con palabras como "inicio", "espacios", "reservas", "configuración", etc.');
+    }
+  };
+
   // --- LÓGICA DE NOTIFICACIONES ---
   const fetchNotifications = async () => {
     try {
@@ -126,7 +185,6 @@ const Header = ({
         <div className="flex items-center h-full gap-4 sm:gap-6">
           
           {/* 🔹 BOTÓN HAMBURGUESA - SOLO MÓVIL 🔹 */}
-          {/* AHORA PERFECTAMENTE CENTRADO CON LA BARRA DE BÚSQUEDA */}
           <button
             onClick={onMobileMenuToggle}
             className="md:hidden flex items-center justify-center h-9 w-9 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
@@ -138,17 +196,18 @@ const Header = ({
           {/* BARRA DE BÚSQUEDA */}
           <div className="flex-1 flex justify-center">
             <div className="w-full max-w-xs sm:max-w-lg">
-              <form className="relative">
+              <form onSubmit={handleSearch} className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Search className="h-4 w-4 text-gray-400" />
                 </div>
                 <input
                   type="search"
                   className="block w-full pl-10 pr-3 py-2 sm:py-1.5 border border-gray-300 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  placeholder={user?.rol === 'administrador' ? 'Buscar registros...' : 'Buscar espacios...'}
+                  placeholder={user?.rol === 'administrador' ? 'Buscar ...' : 'Buscar ...'}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
+                <button type="submit" className="hidden">Buscar</button>
               </form>
             </div>
           </div>

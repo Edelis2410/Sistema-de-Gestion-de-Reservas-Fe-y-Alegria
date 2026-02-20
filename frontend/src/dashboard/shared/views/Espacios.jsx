@@ -192,13 +192,13 @@ const Espacios = () => {
   });
 
   return (
-    <div className="p-6">
-      {/* 1. HEADER */}
+    <div className="w-full">
+      {/* HEADER (igual que en Inicio/Dashboard) */}
       <div className="mb-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Espacios Disponibles</h1>
-            <p className="text-gray-600">Gestión y disponibilidad horaria institucional</p>
+            <h1 className="text-2xl font-bold text-slate-900">Espacios Disponibles</h1>
+            <p className="mt-1 text-sm text-slate-500">Gestión y disponibilidad horaria institucional</p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 mt-4 md:mt-0 w-full sm:w-auto">
@@ -246,7 +246,7 @@ const Espacios = () => {
         </div>
       </div>
 
-      {/* 2. MODALES Y DIÁLOGOS */}
+      {/* 2. MODALES Y DIÁLOGOS (sin cambios) */}
       {showSuccessDialog && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl p-8 shadow-2xl flex flex-col items-center max-w-sm w-full animate-in zoom-in duration-300">
@@ -363,7 +363,7 @@ const Espacios = () => {
         </div>
       )}
 
-      {/* 3. LISTADO DE TARJETAS */}
+      {/* 3. LISTADO DE TARJETAS (sin cambios) */}
       {loading ? (
         <div className="flex flex-col justify-center items-center h-64 text-gray-400">
           <Loader className="animate-spin text-blue-600 mb-2" size={32} />

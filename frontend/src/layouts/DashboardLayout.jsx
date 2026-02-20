@@ -76,11 +76,14 @@ const DashboardLayout = () => {
           user={user}
           isSidebarCollapsed={isSidebarCollapsed}
           userType={user.rol}
-          onMobileMenuToggle={toggleMobileMenu}   // ← nueva
+          onMobileMenuToggle={toggleMobileMenu}
           isMobileMenuOpen={isMobileMenuOpen}
         />
-        <main className="flex-1 pt-14 px-6 pb-6 overflow-auto">
-          <Outlet />
+        {/* MAIN con padding lateral y superior controlado */}
+        <main className="flex-1 pt-20 overflow-auto">
+          <div className="px-14 pb-6">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

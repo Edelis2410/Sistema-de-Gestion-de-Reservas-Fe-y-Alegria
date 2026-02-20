@@ -1,5 +1,5 @@
 // src/dashboard/shared/views/Reservas/CrearReserva.jsx
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, ArrowRight, AlertCircle, Clock } from 'lucide-react';
 
@@ -16,6 +16,9 @@ import { useAuth } from '../../../../contexts/AuthContext';
 const CrearReserva = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  // Referencia para evitar doble clic
+  const isSubmitting = useRef(false);
   
   // Estados
   const [espacios, setEspacios] = useState([]);
@@ -47,21 +50,18 @@ const CrearReserva = () => {
       const result = await response.json();
       
       if (result.success) {
-        // Mapeamos todos los datos, incluyendo 'activo'
         const todosLosEspacios = (result.data || []).map(esp => ({
           id: esp.id,
           nombre: esp.nombre,
           capacidad: esp.capacidad,
           tipo: esp.tipo,
-          activo: esp.activo,                
-          descripcion: esp.descripcion        
+          activo: esp.activo,
+          descripcion: esp.descripcion
         }));
 
-        // Filtramos solo los espacios activos
         const espaciosActivos = todosLosEspacios.filter(esp => esp.activo === true);
         setEspacios(espaciosActivos);
 
-        // Preselección desde localStorage (solo si el espacio está activo)
         const preselected = localStorage.getItem('selectedSpace');
         if (preselected) {
           const norm = (t) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
@@ -69,7 +69,6 @@ const CrearReserva = () => {
           if (encontrado) {
             setFormData(prev => ({ ...prev, espacio_id: encontrado.id.toString() }));
           }
-          // Si no se encuentra (porque está inactivo), simplemente no preseleccionamos nada
           localStorage.removeItem('selectedSpace');
         }
       }
@@ -102,7 +101,6 @@ const CrearReserva = () => {
     const { espacio_id, fecha, hora_inicio, hora_fin } = formData;
     if (!espacio_id || !fecha || !hora_inicio || !hora_fin) return false;
 
-    // 1. Validación de Rango Escolar (7 AM - 5 PM)
     const inicio = parseInt(hora_inicio.split(':')[0]);
     const fin = parseInt(hora_fin.split(':')[0]);
     const minFin = parseInt(hora_fin.split(':')[1]);
@@ -110,9 +108,8 @@ const CrearReserva = () => {
 
     if (!dentroDeHorarioEscolar) return false;
 
-    // 2. Validación de Tiempo Real (No permitir horas pasadas si es hoy)
     const ahora = new Date();
-    const hoy = ahora.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+    const hoy = ahora.toISOString().split('T')[0];
 
     if (fecha === hoy) {
       const [hInicio, mInicio] = hora_inicio.split(':').map(Number);
@@ -120,14 +117,13 @@ const CrearReserva = () => {
       const minutosActuales = ahora.getMinutes();
 
       if (hInicio < horaActual || (hInicio === horaActual && mInicio < minutosActuales)) {
-      return false; // La hora ya pasó
+        return false;
       }
     }
 
     return true;
   };
 
-  // Función para determinar si mostrar el aviso de horario (solo si hay horas pero son inválidas)
   const mostrarAvisoHorario = () => {
     const { hora_inicio, hora_fin } = formData;
     if (!hora_inicio || !hora_fin) return false;
@@ -140,53 +136,60 @@ const CrearReserva = () => {
   };
 
   const handleCheckAndOpenModal = async () => {
+    // Evitar múltiples clics mientras se procesa
+    if (isSubmitting.current) return;
+    isSubmitting.current = true;
+
     setErrorDisponibilidad('');
 
-    // --- VALIDACIÓN DE TIEMPO EN EL FRONTEND ---
+    // Validaciones en frontend
     const ahora = new Date();
     const hoy = ahora.toISOString().split('T')[0];
-  
-    // 1. Validar fecha pasada
+
     if (formData.fecha < hoy) {
       setErrorDisponibilidad('No se pueden realizar reservas en fechas pasadas.');
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      isSubmitting.current = false;
       return;
     }
 
-    // 2. Validar hora pasada (si es hoy)
     if (formData.fecha === hoy) {
-     const [hInicio, mInicio] = formData.hora_inicio.split(':').map(Number);
-     if (hInicio < ahora.getHours() || (hInicio === ahora.getHours() && mInicio < ahora.getMinutes())) {
-       setErrorDisponibilidad('La hora de inicio seleccionada ya ha pasado.');
-       window.scrollTo({ top: 0, behavior: 'smooth' });
-       return;
+      const [hInicio, mInicio] = formData.hora_inicio.split(':').map(Number);
+      if (hInicio < ahora.getHours() || (hInicio === ahora.getHours() && mInicio < ahora.getMinutes())) {
+        setErrorDisponibilidad('La hora de inicio seleccionada ya ha pasado.');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        isSubmitting.current = false;
+        return;
       }
     }
 
-    // --- VALIDACIÓN DE DURACIÓN (Mínimo 1h, Máximo 4h) ---
     if (formData.hora_inicio && formData.hora_fin) {
       const inicioArr = formData.hora_inicio.split(':').map(Number);
       const finArr = formData.hora_fin.split(':').map(Number);
       
-      // Convertimos todo a minutos para facilitar el cálculo
       const minutosInicio = inicioArr[0] * 60 + inicioArr[1];
       const minutosFin = finArr[0] * 60 + finArr[1];
       const duracionMinutos = minutosFin - minutosInicio;
 
-      if (duracionMinutos > 240) { // 4 horas * 60 min
+      if (duracionMinutos > 240) {
         setErrorDisponibilidad('No puedes reservar por más de 4 horas.');
         window.scrollTo({ top: 0, behavior: 'smooth' });
+        isSubmitting.current = false;
         return;
       }
 
-      if (duracionMinutos < 60) { // 1 hora * 60 min
+      if (duracionMinutos < 60) {
         setErrorDisponibilidad('La reserva debe ser de al menos 1 hora.');
         window.scrollTo({ top: 0, behavior: 'smooth' });
+        isSubmitting.current = false;
         return;
       }
     }
     
-    if (!isFormValid()) return;
+    if (!isFormValid()) {
+      isSubmitting.current = false;
+      return;
+    }
     
     setChecking(true);
     setErrorDisponibilidad('');
@@ -209,17 +212,21 @@ const CrearReserva = () => {
       setErrorDisponibilidad('Error de conexión con el servidor al verificar disponibilidad.');
     } finally {
       setChecking(false);
+      isSubmitting.current = false;
     }
   };
 
   const handleConfirmReservation = async () => {
     if (!formData.titulo.trim()) return;
 
+    // Bloquear doble clic
+    if (isSubmitting.current) return;
+    isSubmitting.current = true;
+
     setSaving(true);
     try {
       const token = localStorage.getItem('token');
       
-      // Verificamos el rol del usuario desde el contexto
       const isAdmin = user?.rol === 'administrador';
 
       const response = await fetch('http://localhost:5000/api/reservas', {
@@ -232,7 +239,6 @@ const CrearReserva = () => {
           ...formData,
           espacio_id: parseInt(formData.espacio_id),
           usuario_id: user?.id,
-          // AQUÍ LA MAGIA: Si es admin, mandamos el estado 'confirmada'
           estado: isAdmin ? 'confirmada' : 'pendiente'
         })
       });
@@ -241,25 +247,23 @@ const CrearReserva = () => {
 
       if (response.ok && result.success) {
         setShowModal(false);
-        setSaving(false);
         setShowSuccessModal(true);
       } else {
-        setSaving(false);
-        // Aquí mostramos el error que viene del backend (por si la validación falla allá también)
         setErrorDisponibilidad(result.error || 'No se pudo crear la reserva');
         setShowModal(false);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch (error) {
-      setSaving(false);
       alert('Error de conexión con el servidor');
+    } finally {
+      setSaving(false);
+      isSubmitting.current = false;
     }
   };
 
   const goToHistory = () => {
     setShowSuccessModal(false);
     
-    // Redirigir según el rol
     if (user?.rol === 'administrador') {
       navigate('/admin/reservas/historial');
     } else {
@@ -268,7 +272,7 @@ const CrearReserva = () => {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto relative">
+    <div className="w-full">
       <FormHeader title="Nueva Reserva" onBack={() => navigate('/docente/espacios')} />
 
       {errorDisponibilidad && (
@@ -287,7 +291,7 @@ const CrearReserva = () => {
           onHoraFinChange={(h) => updateFormData('hora_fin', h)}
         />
         <SpaceSelector
-          espacios={espacios}           // ← ahora espacios solo contiene los activos
+          espacios={espacios}
           selectedSpace={formData.espacio_id}
           onSelectSpace={(id) => updateFormData('espacio_id', id)}
           loading={loading}
@@ -297,7 +301,6 @@ const CrearReserva = () => {
       </div>
 
       <div className="flex flex-col items-center mt-10">
-        {/* MENSAJE DE HORARIO PERMITIDO (Justo arriba del botón) */}
         {mostrarAvisoHorario() && (
           <div className="mb-4 flex items-center gap-2 text-red-500 animate-bounce">
             <Clock className="h-4 w-4" />
@@ -307,9 +310,9 @@ const CrearReserva = () => {
 
         <button
           onClick={handleCheckAndOpenModal}
-          disabled={!isFormValid() || saving || checking}
+          disabled={!isFormValid() || saving || checking || isSubmitting.current}
           className={`px-16 py-4 rounded-full text-white font-bold text-lg shadow-xl transition-all ${
-            isFormValid() && !saving && !checking ? 'bg-blue-600 hover:bg-blue-700 hover:scale-105' : 'bg-gray-300'
+            isFormValid() && !saving && !checking && !isSubmitting.current ? 'bg-blue-600 hover:bg-blue-700 hover:scale-105' : 'bg-gray-300 cursor-not-allowed'
           }`}
         >
           {checking ? 'Verificando...' : saving ? 'Guardando...' : 'Confirmar Reserva'}
@@ -318,7 +321,10 @@ const CrearReserva = () => {
 
       <ReservationModal
         isOpen={showModal}
-        onClose={() => setShowModal(false)}
+        onClose={() => {
+          setShowModal(false);
+          isSubmitting.current = false;
+        }}
         onSubmit={handleConfirmReservation}
         reservationName={formData.titulo}
         onReservationNameChange={(e) => updateFormData('titulo', e.target.value)}

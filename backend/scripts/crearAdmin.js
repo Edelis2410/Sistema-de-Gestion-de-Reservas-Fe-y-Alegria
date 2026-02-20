@@ -51,7 +51,7 @@ async function crearAdmin() {
     const admin = await prisma.usuario.create({
       data: {
         nombre: 'Administrador Principal',
-        email: 'admin@colegio.edu',
+        email: 'edelismb@gmail.com',
         password_hash: password_hash,
         rol_id: rolAdmin.id,
         activo: true,

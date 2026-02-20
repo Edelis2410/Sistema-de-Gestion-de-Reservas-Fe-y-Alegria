@@ -27,6 +27,25 @@ const AdminDetallesModal = ({ reserva, isOpen, onClose }) => {
     }
   };
 
+  // Nueva función para formatear fecha de creación (incluye hora)
+  const formatearFechaCreacion = (fechaStr) => {
+    if (!fechaStr || fechaStr === 'N/A') return 'N/A';
+    try {
+      const fecha = new Date(fechaStr);
+      return fecha.toLocaleString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      });
+    } catch (e) {
+      return fechaStr;
+    }
+  };
+
   const getEstadoEstilo = (estado) => {
     switch (estado?.toLowerCase()) {
       case 'confirmada': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
@@ -103,6 +122,13 @@ const AdminDetallesModal = ({ reserva, isOpen, onClose }) => {
               icon={<Clock4 size={16}/>} 
               label="Duración Estimada" 
               value={reserva.duracion} 
+            />
+            {/* NUEVO: Fecha de Creación */}
+            <DetailItem 
+              icon={<Clock4 size={16}/>} 
+              label="Fecha de Creación" 
+              value={formatearFechaCreacion(reserva.fecha_creacion)} 
+              fullWidth
             />
           </div>
 

@@ -112,7 +112,8 @@ const HistorialReservas = () => {
             horaFin: horaFinFormateada,       
             motivo: res.titulo,
             estado: res.estado, 
-            participantes: res.participantes || 1
+            participantes: res.participantes || 1,
+            fechaCreacion: res.fecha_creacion,
           };
         });
         
@@ -201,7 +202,7 @@ const HistorialReservas = () => {
         setShowSuccessModal(true);
         loadReservations(); 
       }
-    } catch (error) { alert('❌ Error de conexión'); }
+    } catch (error) { alert('Error de conexión'); }
   };
 
   // Función para ocultar/restaurar reserva
@@ -225,16 +226,17 @@ const HistorialReservas = () => {
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-6 text-left">
-        <div className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
+    <div className="w-full">
+      {/* HEADER (unificado con Inicio/Dashboard) */}
+      <div className="mb-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Historial de Reservas</h1>
-            <p className="text-gray-600">Gestión en tiempo real de sus espacios</p>
+            <h1 className="text-2xl font-bold text-slate-900">Historial de Reservas</h1>
+            <p className="mt-1 text-sm text-slate-500">Gestión en tiempo real de sus espacios</p>
           </div>
           
-          <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4">
-            {/* Botón para alternar vista ocultas - MÁS PEQUEÑO Y SIN ÍCONO */}
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
+            {/* Botón para alternar vista ocultas */}
             <button
               onClick={() => setShowHidden(!showHidden)}
               className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
@@ -273,7 +275,8 @@ const HistorialReservas = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden text-left">
+      {/* TABLA con estilo de tarjeta */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         {loading ? (
           <div className="p-12 text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
@@ -368,7 +371,7 @@ const HistorialReservas = () => {
       <SuccessModal 
         isOpen={showSuccessModal} 
         onClose={() => setShowSuccessModal(false)}
-        mensaje="La reserva ha sido procesada correctamente."
+        mensaje="La reserva ha sido cancelada correctamente."
       />
     </div>
   );

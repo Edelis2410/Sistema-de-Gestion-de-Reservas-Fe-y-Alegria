@@ -35,7 +35,6 @@ const DetallesReservaModal = ({
         <div className="p-6 space-y-4">
           <div>
             <h4 className="text-sm font-medium text-gray-500 mb-1">ID</h4>
-            {/* CAMBIO AQUÍ: Usamos displayId si existe, sino el id original */}
             <p className="text-lg font-semibold">
               #{ (reservaSeleccionada.displayId || reservaSeleccionada.id).toString().padStart(2, '0') }
             </p>
@@ -59,6 +58,24 @@ const DetallesReservaModal = ({
           <div>
             <h4 className="text-sm font-medium text-gray-500 mb-1">Título/Motivo</h4>
             <p className="text-gray-800">{reservaSeleccionada.motivo}</p>
+          </div>
+
+          {/* Fecha de creación */}
+          <div>
+            <h4 className="text-sm font-medium text-gray-500 mb-1">Fecha de Creación</h4>
+            <p className="text-gray-800">
+              {reservaSeleccionada.fechaCreacion 
+                ? new Date(reservaSeleccionada.fechaCreacion).toLocaleString('es-ES', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true
+                  })
+                : 'No disponible'}
+            </p>
           </div>
         </div>
         

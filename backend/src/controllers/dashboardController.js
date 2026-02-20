@@ -191,14 +191,15 @@ exports.getReporteEstadisticas = async (req, res) => {
                         fecha: r.fecha ? new Date(r.fecha).toISOString().split('T')[0] : 'N/A',
                         horaInicio: r.hora_inicio ? new Date(r.hora_inicio).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) : 'N/A',
                         duracion: duracionTexto,
-                        estado: r.estado || 'pendiente'
+                        estado: r.estado || 'pendiente',
+                        fecha_creacion: r.fecha_creacion
                     };
                 }),
                 usuarios: usuariosFiltrados.map(u => ({
                     id: u.id,
                     nombre: u.nombre,
                     correo: u.email,
-                    fechaRegistro: u.fecha_creacion ? new Date(u.fecha_creacion).toISOString().split('T')[0] : 'N/A',
+                    fechaRegistro: u.fecha_creacion, 
                     totalReservas: u._count.reservas,
                     estado: u.activo ? 'Activo' : 'Inactivo',
                     rol: u.rol?.nombre || 'Docente'
