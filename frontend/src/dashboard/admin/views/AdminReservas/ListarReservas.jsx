@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../../../contexts/AuthContext';
 import { Check, X, MapPin, MessageCircle, Eye, AlertCircle, Send, Edit } from 'lucide-react';
 import AdminDetallesModal from './AdminDetallesModal';
-import EditarReservaModal from './EditarReservaModal'; // Importado en la misma carpeta
+import EditarReservaModal from './EditarReservaModal';
 
 const ListarReservas = () => {
   const { user } = useAuth();
@@ -12,14 +12,15 @@ const ListarReservas = () => {
   
   const [reservaSeleccionada, setReservaSeleccionada] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false); // Estado para editar
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  // ESTADOS PARA EL RECHAZO
+  // Estados para el rechazo
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [idParaRechazar, setIdParaRechazar] = useState(null);
   const [motivo_rechazo, setMotivoRechazo] = useState('');
+  const [isRejecting, setIsRejecting] = useState(false); // Estado de carga
 
-  // Espacios para el modal de edición (puedes traerlos de una API si prefieres)
+  // Espacios para el modal de edición
   const espaciosDisponibles = [
     { id: 1, nombre: 'CERPA' },
     { id: 2, nombre: 'CAPILLA' },
@@ -55,22 +56,14 @@ const ListarReservas = () => {
   const abrirModal = (res) => {
     const reservaFormateada = {
       ...res,
-      displayId: res.id, // Para que el modal de edición tenga un ID visual
+      displayId: res.id,
       usuario: res.usuario?.nombre || 'N/A',
       espacio: res.espacio?.nombre || 'N/A',
       espacio_id: res.espacio_id,
-      motivo: res.titulo, // Mapeo para compatibilidad con el modal
+      motivo: res.titulo,
       fecha: res.fecha ? new Date(res.fecha).toISOString().split('T')[0] : 'N/A',
-      horaInicio: res.hora_inicio ? new Date(res.hora_inicio).toLocaleTimeString('en-GB', { 
-        hour: '2-digit', 
-        minute: '2-digit', 
-        timeZone: 'UTC' 
-      }) : 'N/A',
-      horaFin: res.hora_fin ? new Date(res.hora_fin).toLocaleTimeString('en-GB', { 
-        hour: '2-digit', 
-        minute: '2-digit', 
-        timeZone: 'UTC' 
-      }) : 'N/A',
+      horaInicio: res.hora_inicio ? new Date(res.hora_inicio).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) : 'N/A',
+      horaFin: res.hora_fin ? new Date(res.hora_fin).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) : 'N/A',
       duracion: (() => {
         if (res.hora_inicio && res.hora_fin) {
           const diffMs = new Date(res.hora_fin) - new Date(res.hora_inicio);
@@ -81,17 +74,15 @@ const ListarReservas = () => {
         return "N/A";
       })()
     };
-
     setReservaSeleccionada(reservaFormateada);
     setIsModalOpen(true);
   };
 
-  // Función para abrir el modal de edición
   const handleEditClick = (res) => {
     const reservaParaEditar = {
         ...res,
         displayId: res.id,
-        espacio: res.espacio_id, // El modal espera el ID numérico
+        espacio: res.espacio_id,
         motivo: res.titulo,
         horaInicio: new Date(res.hora_inicio).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
         horaFin: new Date(res.hora_fin).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
@@ -111,26 +102,17 @@ const ListarReservas = () => {
         },
         body: JSON.stringify(datosActualizados)
       });
-
       const result = await response.json();
-
       if (result.success) {
         setIsEditModalOpen(false);
         cargarSolicitudes();
-        return { success: true }; // Éxito total
+        return { success: true };
       } else {
-        // Retornamos el error que viene del backend (ej: "Espacio ocupado")
-        return { 
-          success: false, 
-          message: result.error || "No se pudo actualizar la reserva" 
-        };
+        return { success: false, message: result.error || "No se pudo actualizar la reserva" };
       }
     } catch (error) {
       console.error("Error al actualizar reserva:", error);
-      return { 
-        success: false, 
-        message: "Error de conexión con el servidor" 
-      };
+      return { success: false, message: "Error de conexión con el servidor" };
     }
   };
 
@@ -140,6 +122,8 @@ const ListarReservas = () => {
       setIsRejectModalOpen(true);
       return;
     }
+
+    setIsRejecting(true); // ← Activar estado de carga
 
     try {
       const token = localStorage.getItem('token');
@@ -166,6 +150,8 @@ const ListarReservas = () => {
       }
     } catch (error) {
       console.error("Error al actualizar estado:", error);
+    } finally {
+      setIsRejecting(false); // ← Desactivar estado de carga
     }
   };
 
@@ -173,7 +159,7 @@ const ListarReservas = () => {
 
   return (
     <div className="w-full">
-      {/* HEADER (igual que en Inicio/Dashboard) */}
+      {/* HEADER */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-900">Gestión de Solicitudes</h1>
         <p className="mt-1 text-sm text-slate-500">
@@ -228,11 +214,9 @@ const ListarReservas = () => {
                         <button onClick={() => abrirModal(res)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Ver">
                           <Eye size={18} />
                         </button>
-
                         <button onClick={() => handleEditClick(res)} className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all" title="Editar">
                           <Edit size={18} />
                         </button>
-
                         {res.estado === 'pendiente' && (
                           <>
                             <button onClick={() => handleEstado(res.id, 'confirmada')} className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all" title="Aprobar">
@@ -275,13 +259,23 @@ const ListarReservas = () => {
               onChange={(e) => setMotivoRechazo(e.target.value)}
             />
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setIsRejectModalOpen(false)} className="flex-1 px-4 py-2.5 bg-slate-100 rounded-xl font-medium">Cancelar</button>
               <button 
-                disabled={!motivo_rechazo.trim()} 
+                onClick={() => setIsRejectModalOpen(false)} 
+                className="flex-1 px-4 py-2.5 bg-slate-100 rounded-xl font-medium"
+                disabled={isRejecting}
+              >
+                Cancelar
+              </button>
+              <button 
+                disabled={!motivo_rechazo.trim() || isRejecting} 
                 onClick={() => handleEstado(idParaRechazar, 'rechazada')} 
                 className="flex-1 px-4 py-2.5 bg-rose-600 text-white rounded-xl disabled:opacity-50 flex items-center justify-center gap-2 font-medium"
               >
-                <Send size={16} /> Confirmar
+                {isRejecting ? (
+                  <>Procesando...</>
+                ) : (
+                  <><Send size={16} /> Confirmar</>
+                )}
               </button>
             </div>
           </div>

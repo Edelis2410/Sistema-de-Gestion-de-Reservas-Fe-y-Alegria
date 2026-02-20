@@ -63,12 +63,10 @@ const Dashboard = () => {
 
   return (
     <div className="w-full">
-      {/* HEADER UNIFICADO CON INICIO.JSX */}
+      {/* HEADER */}
       <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 mb-1">
-            Dashboard
-          </h1>
+          <h1 className="text-2xl font-bold text-slate-900 mb-1">Dashboard</h1>
           <p className="text-slate-500 text-sm">
             Visualiza el estado de tus solicitudes y próximas reservas.
           </p>
@@ -142,7 +140,8 @@ const Dashboard = () => {
               {chartData.map((item, i) => (
                 <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
                   <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }}></div>
+                    {/* BARRA VERTICAL en lugar de círculo */}
+                    <div className="w-2 h-8 rounded-full" style={{ backgroundColor: item.color }}></div>
                     <span className="text-xs font-bold text-slate-700">{item.name}</span>
                   </div>
                   <span className="text-xs font-bold text-slate-900">{item.value}</span>
