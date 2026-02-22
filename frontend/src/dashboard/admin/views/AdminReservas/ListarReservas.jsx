@@ -32,7 +32,7 @@ const ListarReservas = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/reservas?adminView=true', {
+      const response = await fetch('http://192.168.0.191:5000/api/reservas?adminView=true', {
         headers: { 
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -94,7 +94,7 @@ const ListarReservas = () => {
   const handleActualizarReserva = async (id, datosActualizados) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/reservas/${id}`, {
+      const response = await fetch(`http://192.168.0.191:5000/api/reservas/${id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -127,7 +127,7 @@ const ListarReservas = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/reservas/${id}`, {
+      const response = await fetch(`http://192.168.0.191:5000/api/reservas/${id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

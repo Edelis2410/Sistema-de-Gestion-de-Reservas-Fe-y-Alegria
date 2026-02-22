@@ -44,7 +44,7 @@ const ListarUsuarios = () => {
     setIsLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/usuarios', {
+      const response = await fetch('http://192.168.0.191:5000/api/usuarios', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -59,7 +59,7 @@ const ListarUsuarios = () => {
   const confirmarEliminacion = async () => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`http://localhost:5000/api/usuarios/${userToDelete.id}`, {
+      await fetch(`http://192.168.0.191:5000/api/usuarios/${userToDelete.id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -74,7 +74,7 @@ const ListarUsuarios = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/usuarios/${editingUser.id}`, {
+      const response = await fetch(`http://192.168.0.191:5000/api/usuarios/${editingUser.id}`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',

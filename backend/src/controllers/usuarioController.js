@@ -329,7 +329,7 @@ exports.forgotPassword = async (req, res) => {
         }
 
         const resetToken = jwt.sign({ id: usuario.id }, SECRET_KEY, { expiresIn: '1h' });
-        const resetLink = `http://localhost:5173/reset-password?token=${resetToken}`;
+        const resetLink = `http://192.168.0.191:5173/reset-password?token=${resetToken}`;
 
         const mailOptions = {
             from: process.env.EMAIL_USER,
@@ -380,6 +380,6 @@ exports.resetPassword = async (req, res) => {
 
         res.json({ success: true, message: 'Contraseña actualizada correctamente' });
     } catch (error) {
-        res.status(400).json({ success: false, error: 'El enlace es válido o ha expirado' });
+        res.status(400).json({ success: false, error: 'El enlace es inválido o ha expirado' });
     }
 };

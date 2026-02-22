@@ -127,13 +127,14 @@ exports.getReporteEstadisticas = async (req, res) => {
             orderBy: { fecha: 'desc' }
         });
 
-        // --- OBTENER TODOS LOS ESPACIOS ACTIVOS ---
+        // --- OBTENER TODOS LOS ESPACIOS ACTIVOS (INCLUYENDO fecha_creacion) ---
         const todosEspacios = await prisma.espacio.findMany({
             where: { eliminado: false, activo: true },
             select: {
                 id: true,
                 nombre: true,
                 activo: true,
+                fecha_creacion: true,  // ← NUEVO: incluimos la fecha de creación
                 reservas: {
                     where: whereReserva,
                     select: { hora_inicio: true, hora_fin: true }
@@ -199,7 +200,7 @@ exports.getReporteEstadisticas = async (req, res) => {
                     id: u.id,
                     nombre: u.nombre,
                     correo: u.email,
-                    fechaRegistro: u.fecha_creacion, 
+                    fechaRegistro: u.fecha_creacion,
                     totalReservas: u._count.reservas,
                     estado: u.activo ? 'Activo' : 'Inactivo',
                     rol: u.rol?.nombre || 'Docente'
@@ -214,6 +215,7 @@ exports.getReporteEstadisticas = async (req, res) => {
                     return {
                         id: e.id,
                         espacio: e.nombre,
+                        fecha_creacion: e.fecha_creacion,  // ← NUEVO: incluimos la fecha en la respuesta
                         horasTotales: Math.round(horasTotalesReales * 10) / 10,
                         porcentajeOcupacion: e.reservas.length > 0 ? Math.min((e.reservas.length * 10), 100) : 0,
                         numeroReservas: e.reservas.length,

@@ -46,7 +46,7 @@ const CrearReserva = () => {
   const loadEspacios = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/espacios');
+      const response = await fetch('http://192.168.0.191:5000/api/espacios');
       const result = await response.json();
       
       if (result.success) {
@@ -197,7 +197,7 @@ const CrearReserva = () => {
     try {
       const { espacio_id, fecha, hora_inicio, hora_fin } = formData;
       const response = await fetch(
-        `http://localhost:5000/api/reservas/check?espacio_id=${espacio_id}&fecha=${fecha}&hora_inicio=${hora_inicio}&hora_fin=${hora_fin}`
+        `http://192.168.0.191:5000/api/reservas/check?espacio_id=${espacio_id}&fecha=${fecha}&hora_inicio=${hora_inicio}&hora_fin=${hora_fin}`
       );
       
       const result = await response.json();
@@ -229,7 +229,7 @@ const CrearReserva = () => {
       
       const isAdmin = user?.rol === 'administrador';
 
-      const response = await fetch('http://localhost:5000/api/reservas', {
+      const response = await fetch('http://192.168.0.191:5000/api/reservas', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

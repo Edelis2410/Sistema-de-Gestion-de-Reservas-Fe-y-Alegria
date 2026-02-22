@@ -102,7 +102,7 @@ export const MiniCalendar = ({
         ))}
       </div>
 
-      {/* Días del mes - ahora de solo lectura */}
+      {/* Días del mes */}
       <div className="grid grid-cols-7 gap-1">
         {calendarDays.map((date, index) => {
           const { hasConfirmed, hasPending } = getDateStatus(date);
@@ -117,14 +117,13 @@ export const MiniCalendar = ({
               isCurrentMonth={isCurrentMonth}
               hasConfirmed={hasConfirmed}
               hasPending={hasPending}
-              // Se quitó: isSelected y onClick
             />
           );
         })}
       </div>
 
-      {/* Leyenda */}
-      <div className="flex items-center justify-center mt-6 space-x-8 text-sm">
+      {/* Leyenda con tamaño de texto responsivo */}
+      <div className="flex items-center justify-center mt-6 space-x-4 sm:space-x-8 text-xs sm:text-sm">
         <div className="flex items-center">
           <div className="w-3 h-3 bg-green-100 border border-green-400 rounded mr-2" />
           <span className="text-slate-700 font-medium">Confirmadas</span>

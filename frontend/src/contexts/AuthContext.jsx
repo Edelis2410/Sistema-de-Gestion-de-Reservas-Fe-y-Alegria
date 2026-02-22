@@ -85,7 +85,7 @@ export const AuthProvider = ({ children }) => {
       const token = getToken();
       
       // Enviamos los datos al servidor usando la nueva ruta de perfil
-      const response = await fetch('http://localhost:5000/api/usuarios/perfil', {
+      const response = await fetch('http://192.168.0.191:5000/api/usuarios/perfil', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

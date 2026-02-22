@@ -17,7 +17,7 @@ const Configuracion = () => {
         const token = localStorage.getItem('token');
         if (!token) return;
 
-        const response = await fetch('http://localhost:5000/api/verify-token', {
+        const response = await fetch('http://192.168.0.191:5000/api/verify-token', {
           method: 'GET',
           headers: { 
             'Authorization': `Bearer ${token}`,
@@ -52,7 +52,7 @@ const Configuracion = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/usuarios/preferencias', {
+      const response = await fetch('http://192.168.0.191:5000/api/usuarios/preferencias', {
         method: 'PUT',
         headers: { 
           'Authorization': `Bearer ${token}`,

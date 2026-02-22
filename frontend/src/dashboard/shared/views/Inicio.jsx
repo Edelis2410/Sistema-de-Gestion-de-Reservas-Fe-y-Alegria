@@ -23,7 +23,7 @@ const Inicio = () => {
       setHiddenIds(savedHidden);
 
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/reservas', {
+      const response = await fetch('http://192.168.0.191:5000/api/reservas', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const result = await response.json();

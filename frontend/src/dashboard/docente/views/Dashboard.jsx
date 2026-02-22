@@ -19,7 +19,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDocenteStats = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/docente/stats', {
+        const response = await fetch('http://192.168.0.191:5000/api/docente/stats', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
         const result = await response.json();
@@ -140,7 +140,6 @@ const Dashboard = () => {
               {chartData.map((item, i) => (
                 <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
                   <div className="flex items-center gap-2">
-                    {/* BARRA VERTICAL en lugar de círculo */}
                     <div className="w-2 h-8 rounded-full" style={{ backgroundColor: item.color }}></div>
                     <span className="text-xs font-bold text-slate-700">{item.name}</span>
                   </div>
@@ -201,23 +200,23 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* TARJETAS INFERIORES */}
+      {/* TARJETAS INFERIORES - AHORA CON ESTILO AZUL CLARITO */}
       <div className="grid gap-4 mt-6 md:grid-cols-5">
         {chartData.map((item, i) => {
           const percentage = getPercentage(item.value);
           return (
-            <div key={i} className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+            <div key={i} className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-4 border border-blue-200 shadow-sm">
               <p className="font-bold text-slate-500 text-[10px] uppercase tracking-wider">{item.name}</p>
               <div className="flex items-center justify-between mt-2">
                 <p className="text-xl font-bold text-slate-900">{percentage}%</p>
-                <div className="h-1 w-10 bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-1 w-10 bg-blue-200 rounded-full overflow-hidden">
                   <div className="h-full" style={{ width: `${percentage}%`, backgroundColor: item.color }}></div>
                 </div>
               </div>
             </div>
           );
         })}
-        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-4 border border-blue-200 shadow-sm">
           <p className="font-bold text-slate-500 text-[10px] uppercase tracking-wider">Tendencia</p>
           <div className="flex items-center justify-between mt-2">
             <p className="text-xl font-bold text-green-600">+15%</p>

@@ -68,28 +68,28 @@ const Home = () => {
     { 
       name: 'CERPA', 
       type: 'Auditorio Principal', 
-      capacity: '200 personas', 
+      capacity: '30 personas', 
       icon: <Library />,
       image: cerpaImage 
     },
     { 
       name: 'Sacramento', 
       type: 'Salón de Eventos', 
-      capacity: '150 personas', 
+      capacity: '50 personas', 
       icon: <BookOpen />,
       image: sacramentoImage 
     },
     { 
       name: 'Salón Múltiple', 
       type: 'Espacio Polivalente', 
-      capacity: '300 personas', 
+      capacity: '100 personas', 
       icon: <Users />,
       image: salonMultipleImage 
     },
     { 
       name: 'Capilla', 
       type: 'Espacio Espiritual', 
-      capacity: '100 personas', 
+      capacity: '50 personas', 
       icon: <Cross />,
       image: capillaImage 
     },

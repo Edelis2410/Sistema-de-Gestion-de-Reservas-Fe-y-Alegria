@@ -1,5 +1,5 @@
 // src/dashboard/shared/views/Reservas/HistorialReservas.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Search, 
   Filter, 
@@ -10,7 +10,8 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  ChevronDown
 } from 'lucide-react';
 
 // Importar modales compartidos
@@ -57,6 +58,10 @@ const HistorialReservas = () => {
   const [hiddenReservations, setHiddenReservations] = useState([]);
   const [showHidden, setShowHidden] = useState(false);
 
+  // Estado para el dropdown de filtro
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
   const isAdmin = localStorage.getItem('rol') === 'admin'; 
   
   const espaciosDisponibles = [
@@ -65,6 +70,17 @@ const HistorialReservas = () => {
     { id: 3, nombre: 'SACRAMENTO', capacidad: 6, tipo: 'Salón de Eventos' },
     { id: 4, nombre: 'SALÓN MÚLTIPLE', capacidad: 20, tipo: 'Espacio Polivalente' },
   ];
+
+  // Cerrar dropdown al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsFilterOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Cargar IDs ocultos desde localStorage al iniciar
   useEffect(() => {
@@ -86,7 +102,7 @@ const HistorialReservas = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/reservas', {
+      const response = await fetch('http://192.168.0.191:5000/api/reservas', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -128,11 +144,11 @@ const HistorialReservas = () => {
   };
 
   const estados = [
-    { value: '', label: 'Todos', icon: <Filter className="h-3 w-3" /> },
-    { value: 'confirmada', label: 'Confirmada', color: 'bg-green-100 text-green-800', icon: <CheckCircle className="h-3 w-3" /> },
-    { value: 'pendiente', label: 'Pendiente', color: 'bg-yellow-100 text-yellow-800', icon: <Clock className="h-3 w-3" /> },
-    { value: 'rechazada', label: 'Rechazada', color: 'bg-red-100 text-red-800', icon: <XCircle className="h-3 w-3" /> },
-    { value: 'cancelada', label: 'Cancelada', color: 'bg-gray-100 text-gray-800', icon: <AlertCircle className="h-3 w-3" /> },
+    { value: '', label: 'Todos' },
+    { value: 'confirmada', label: 'Confirmada' },
+    { value: 'pendiente', label: 'Pendiente' },
+    { value: 'rechazada', label: 'Rechazada' },
+    { value: 'cancelada', label: 'Cancelada' },
   ];
 
   const obtenerNombreEspacio = (idEspacio) => {
@@ -149,7 +165,6 @@ const HistorialReservas = () => {
     const matchesSearch = normalizar(espacioNombre).includes(normalizar(busqueda)) || normalizar(motivo).includes(normalizar(busqueda));
     const matchesFilter = !filterStatus || reserva.estado === filterStatus;
     
-    // Filtro de ocultas
     const isHidden = hiddenReservations.includes(reserva.id);
     if (showHidden) {
       return isHidden && matchesSearch && matchesFilter;
@@ -159,18 +174,33 @@ const HistorialReservas = () => {
   });
 
   const getEstadoColor = (estado) => {
-    const estadoObj = estados.find(e => e.value === estado);
-    return estadoObj ? estadoObj.color : 'bg-gray-100 text-gray-800';
+    const colores = {
+      confirmada: 'bg-green-100 text-green-800',
+      pendiente: 'bg-yellow-100 text-yellow-800',
+      rechazada: 'bg-red-100 text-red-800',
+      cancelada: 'bg-gray-100 text-gray-800',
+    };
+    return colores[estado] || 'bg-gray-100 text-gray-800';
   };
 
   const getEstadoIcon = (estado) => {
-    const estadoObj = estados.find(e => e.value === estado);
-    return estadoObj ? estadoObj.icon : <Clock className="h-3 w-3" />;
+    const iconos = {
+      confirmada: <CheckCircle className="h-3 w-3" />,
+      pendiente: <Clock className="h-3 w-3" />,
+      rechazada: <XCircle className="h-3 w-3" />,
+      cancelada: <AlertCircle className="h-3 w-3" />,
+    };
+    return iconos[estado] || <Clock className="h-3 w-3" />;
   };
 
   const getEstadoLabel = (estado) => {
-    const estadoObj = estados.find(e => e.value === estado);
-    return estadoObj ? estadoObj.label : estado;
+    const labels = {
+      confirmada: 'Confirmada',
+      pendiente: 'Pendiente',
+      rechazada: 'Rechazada',
+      cancelada: 'Cancelada',
+    };
+    return labels[estado] || estado;
   };
 
   const handleViewDetails = (id) => {
@@ -186,13 +216,12 @@ const HistorialReservas = () => {
   const confirmDeleteReserva = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/reservas/${reservaSeleccionada.id}`, {
+      const response = await fetch(`http://192.168.0.191:5000/api/reservas/${reservaSeleccionada.id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const result = await response.json();
       if (result.success) {
-        // Eliminar también de la lista de ocultas si estaba
         setHiddenReservations(prev => {
           const newHidden = prev.filter(id => id !== reservaSeleccionada.id);
           localStorage.setItem('hiddenReservations', JSON.stringify(newHidden));
@@ -202,10 +231,9 @@ const HistorialReservas = () => {
         setShowSuccessModal(true);
         loadReservations(); 
       }
-    } catch (error) { alert('Error de conexión'); }
+    } catch (error) { alert('❌ Error de conexión'); }
   };
 
-  // Función para ocultar/restaurar reserva
   const toggleHideReservation = (id) => {
     setHiddenReservations(prev => {
       let newHidden;
@@ -227,19 +255,62 @@ const HistorialReservas = () => {
 
   return (
     <div className="w-full">
-      {/* HEADER (unificado con Inicio/Dashboard) */}
+      {/* HEADER */}
       <div className="mb-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Historial de Reservas</h1>
             <p className="mt-1 text-sm text-slate-500">Gestión en tiempo real de sus espacios</p>
           </div>
-          
-          <div className="flex flex-col md:flex-row md:items-center gap-4">
+
+          <div className="flex flex-col sm:flex-row gap-3 mt-4 md:mt-0 w-full sm:w-auto">
+            {/* Buscador */}
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar por espacio o motivo..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2 border rounded-full outline-none focus:ring-2 focus:ring-blue-500 w-full shadow-sm bg-white transition-all"
+              />
+            </div>
+
+            {/* Botón de filtro (estado) */}
+            <div className="relative w-full sm:w-auto" ref={dropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className="w-full sm:w-auto border rounded-lg px-4 py-2 bg-white outline-none shadow-sm flex items-center justify-between gap-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Filter size={16} className="text-gray-400" />
+                  <span>{estados.find(e => e.value === filterStatus)?.label || 'Todos'}</span>
+                </div>
+                <ChevronDown className={`w-4 h-4 transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isFilterOpen && (
+                <div className="absolute right-0 mt-1 w-full sm:w-48 bg-white border rounded-lg shadow-lg z-50 py-1">
+                  {estados.map((estado) => (
+                    <button
+                      key={estado.value}
+                      onClick={() => { setFilterStatus(estado.value); setIsFilterOpen(false); }}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
+                        filterStatus === estado.value ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-700'
+                      }`}
+                    >
+                      {estado.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Botón para alternar vista ocultas */}
             <button
               onClick={() => setShowHidden(!showHidden)}
-              className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+              className={`px-4 py-2 text-sm font-medium rounded-lg border transition-colors ${
                 showHidden 
                   ? 'bg-purple-100 text-purple-700 border-purple-300' 
                   : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
@@ -247,35 +318,11 @@ const HistorialReservas = () => {
             >
               {showHidden ? 'Ver todas' : 'Ver ocultas'}
             </button>
-
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Buscar por espacio o motivo..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2.5 border border-gray-300 rounded-full focus:ring-2 focus:ring-blue-500 w-full md:w-96"
-              />
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Filter className="h-4 w-4 text-gray-500" />
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="border border-gray-300 rounded-lg px-3 py-2.5 min-w-[150px]"
-              >
-                {estados.map(estado => (
-                  <option key={estado.value} value={estado.value}>{estado.label}</option>
-                ))}
-              </select>
-            </div>
           </div>
         </div>
       </div>
 
-      {/* TABLA con estilo de tarjeta */}
+      {/* TABLA */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         {loading ? (
           <div className="p-12 text-center">

@@ -85,7 +85,7 @@ const Header = ({
   const fetchNotifications = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/notificaciones', {
+      const response = await fetch('http://192.168.0.191:5000/api/notificaciones', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const result = await response.json();
@@ -112,7 +112,7 @@ const Header = ({
   const handleMarkAsRead = async (id) => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`http://localhost:5000/api/notificaciones/${id}/read`, {
+      await fetch(`http://192.168.0.191:5000/api/notificaciones/${id}/read`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -125,7 +125,7 @@ const Header = ({
   const handleMarkAllAsRead = async () => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`http://localhost:5000/api/notificaciones/read-all`, {
+      await fetch(`http://192.168.0.191:5000/api/notificaciones/read-all`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -230,7 +230,7 @@ const Header = ({
               </button>
 
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 max-w-[calc(100vw-2rem)] sm:max-w-none bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
+                <div className="absolute -right-16 sm:right-0 mt-2 w-[calc(100vw-1rem)] sm:w-96 bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
                   <div className="px-4 py-3 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                     <h3 className="font-bold text-slate-800 text-sm">Notificaciones</h3>
                     {unreadCount > 0 && (
@@ -240,7 +240,7 @@ const Header = ({
                     )}
                   </div>
                   
-                  <div className="px-4 py-2 border-b border-gray-100 bg-white flex space-x-2">
+                  <div className="px-4 py-2 border-b border-gray-100 bg-white flex flex-wrap gap-2">
                     {['all', 'unread', 'read'].map((f) => (
                       <button
                         key={f}
@@ -254,7 +254,7 @@ const Header = ({
                     ))}
                   </div>
 
-                  <div className="max-h-[80vh] sm:max-h-[350px] overflow-y-auto">
+                  <div className="max-h-[60vh] sm:max-h-[350px] overflow-y-auto">
                     {filteredNotifications.length > 0 ? (
                       filteredNotifications.map((n) => (
                         <div

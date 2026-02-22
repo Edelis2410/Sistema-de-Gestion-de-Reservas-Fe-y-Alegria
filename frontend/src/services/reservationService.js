@@ -1,7 +1,7 @@
 // src/services/reservationService.js
 import { authFetch } from '../utils/auth';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://192.168.0.191:5000/api';
 
 // ======================
 // FUNCIONES DE RESERVAS (API REAL)

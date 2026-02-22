@@ -46,7 +46,7 @@ const AgregarUsuario = () => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/usuarios', {
+      const response = await fetch('http://192.168.0.191:5000/api/usuarios', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

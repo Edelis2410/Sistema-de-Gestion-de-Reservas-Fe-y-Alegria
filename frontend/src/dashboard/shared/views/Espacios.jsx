@@ -65,7 +65,7 @@ const Espacios = () => {
     try {
       setLoading(true);
       // El backend ya filtra automáticamente los que tienen "eliminado: true"
-      const response = await fetch('http://localhost:5000/api/espacios', {
+      const response = await fetch('http://192.168.0.191:5000/api/espacios', {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       const result = await response.json();
@@ -94,7 +94,7 @@ const Espacios = () => {
 
   const procesarCambioEstado = async (id, nuevoEstado, motivo) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/espacios/${id}/toggle`, {
+      const response = await fetch(`http://192.168.0.191:5000/api/espacios/${id}/toggle`, {
         method: 'PATCH',
         headers: { 
           'Content-Type': 'application/json',
@@ -117,8 +117,8 @@ const Espacios = () => {
     e.preventDefault();
     setIsSaving(true);
     const url = isEditMode 
-      ? `http://localhost:5000/api/espacios/${selectedId}` 
-      : 'http://localhost:5000/api/espacios';
+      ? `http://192.168.0.191:5000/api/espacios/${selectedId}` 
+      : 'http://192.168.0.191:5000/api/espacios';
     
     try {
       const response = await fetch(url, {
@@ -161,7 +161,7 @@ const Espacios = () => {
   // ✅ ELIMINAR (Soft Delete)
   const handleDeleteConfirm = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/espacios/${selectedId}`, {
+      const response = await fetch(`http://192.168.0.191:5000/api/espacios/${selectedId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });

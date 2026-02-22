@@ -74,7 +74,7 @@ const Reportes = () => {
     setCargando(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/reportes/estadisticas?periodo=${filtros.periodo}`, {
+      const response = await fetch(`http://192.168.0.191:5000/api/reportes/estadisticas?periodo=${filtros.periodo}`, {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json' 
@@ -125,6 +125,7 @@ const Reportes = () => {
       fuente = (datosBackend.espacios || []).map(esp => ({
         id: esp.id,
         nombre: esp.espacio,
+        registro: formatFechaCreacion(esp.fecha_creacion),  // ← NUEVA COLUMNA
         horas_totales: esp.horasTotales || 0,
         porcentaje_ocupacion: esp.porcentajeOcupacion || '0%',
         num_reservas: esp.numeroReservas || 0,
@@ -135,7 +136,7 @@ const Reportes = () => {
       fuente = (datosBackend.usuarios || []).map(u => ({
         id: u.id,
         nombre: u.nombre,
-        correo: u.correo,                // ← CORREGIDO: ahora usa 'correo' (del backend)
+        correo: u.correo,
         registro: formatFechaCreacion(u.fechaRegistro),
         reservas: u.totalReservas || 0,
         estado: u.estado || 'Inactivo',
@@ -143,14 +144,13 @@ const Reportes = () => {
       })).sort((a, b) => a.id - b.id);
     } else if (filtros.categoria === 'reservas') {
       fuente = (datosBackend.reservas || []).map(r => {
-        // Mostrar solo la hora de inicio (ya que el backend no envía horaFin)
         let horaTexto = r.horaInicio || 'N/A';
         return {
           id: r.id,
           usuario: r.usuario || 'N/A',
           espacio: r.espacio || 'N/A',
           fecha: r.fecha || 'N/A',
-          hora: horaTexto,                // ← ahora muestra la hora de inicio
+          hora: horaTexto,
           duracion: r.duracion || 'N/A',
           registro: formatFechaCreacion(r.fecha_creacion),
           estado: r.estado || 'pendiente'
@@ -212,13 +212,15 @@ const Reportes = () => {
     doc.setFont('helvetica', 'italic');
     doc.text(`Periodo: ${filtros.periodo.toUpperCase()}`, pageWidth / 2, 51, { align: 'center' });
 
+    // Definir columnas según categoría (ahora espacios incluye Registro)
     const columnas = {
       usuarios: ["ID", "Nombre", "Correo", "Registro", "Reservas", "Estado", "Rol"],
       reservas: ["ID", "Usuario", "Espacio", "Fecha", "Hora", "Duración", "Registro", "Estado"],
-      espacios: ["ID", "Espacio", "Horas Totales", "% Ocup.", "N° Reservas", "Disponibilidad", "Estado"],
+      espacios: ["ID", "Espacio", "Registro", "Horas Totales", "% Ocup.", "N° Reservas", "Disponibilidad", "Estado"],
       sistema: ["Indicador de Gestión", "Valor Actual"]
     }[filtros.categoria];
 
+    // Construir filas según categoría
     let filas = [];
     if (filtros.categoria === 'sistema') {
       filas = datosFiltrados.map(item => [item.indicador, item.valor]);
@@ -226,6 +228,7 @@ const Reportes = () => {
       filas = datosFiltrados.map(item => [
         item.id,
         item.nombre,
+        item.registro,                     // ← NUEVA COLUMNA
         item.horas_totales,
         item.porcentaje_ocupacion,
         item.num_reservas,
@@ -405,7 +408,7 @@ const Reportes = () => {
                 {{
                   usuarios: ["ID", "Nombre", "Correo", "Registro", "Reservas", "Estado", "Rol"],
                   reservas: ["ID", "Usuario", "Espacio", "Fecha", "Hora", "Duración", "Registro", "Estado"],
-                  espacios: ["ID", "Espacio", "Horas Totales", "% Ocup.", "N° Reservas", "Disponibilidad", "Estado"],
+                  espacios: ["ID", "Espacio", "Registro", "Horas Totales", "% Ocup.", "N° Reservas", "Disponibilidad", "Estado"],
                   sistema: ["Indicador", "Valor"]
                 }[filtros.categoria].map((h, i) => (
                   <th key={i} className="px-6 py-4 text-xs font-semibold text-slate-900 uppercase">{h}</th>
@@ -427,6 +430,7 @@ const Reportes = () => {
                       <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
                         <td className="px-6 py-4 text-sm text-slate-700 font-medium">{item.id}</td>
                         <td className="px-6 py-4 text-sm text-slate-700 font-medium">{item.nombre}</td>
+                        <td className="px-6 py-4 text-sm text-slate-700 font-medium">{item.registro}</td>
                         <td className="px-6 py-4 text-sm text-slate-700 font-medium">{item.horas_totales}</td>
                         <td className="px-6 py-4 text-sm text-slate-700 font-medium">{item.porcentaje_ocupacion}</td>
                         <td className="px-6 py-4 text-sm text-slate-700 font-medium">{item.num_reservas}</td>
