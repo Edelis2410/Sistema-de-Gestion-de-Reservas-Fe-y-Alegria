@@ -1,7 +1,7 @@
-Descripción
+Descripción:
 Sistema de información desarrollado para la U.E. Colegio Fe y Alegría Puerto Ordaz con el objetivo de gestionar de manera eficiente las reservas de espacios educativos (CERPA, Capilla, Salón Múltiple, Sacramento, etc.). La aplicación permite a los docentes solicitar espacios y a los administradores aprobar, rechazar o modificar dichas solicitudes, evitando conflictos de horarios y optimizando el uso de los recursos institucionales.
 
-Tecnologías Utilizadas
+Tecnologías Utilizadas:
 Frontend
 React 18 con Vite
 React Router DOM para enrutamiento
@@ -19,7 +19,7 @@ Bcryptjs para hashing de contraseñas
 Nodemailer para envío de correos
 
 Estrutura del proyecto.
-
+```
 sistema-reservas/
 │
 ├── backend/                      # Servidor Node.js + Express
@@ -57,3 +57,4 @@ sistema-reservas/
 │       ├── main.jsx
 │
 └── README.md                     
+```
