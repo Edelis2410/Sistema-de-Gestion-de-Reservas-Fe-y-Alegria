@@ -53,7 +53,7 @@ sistema-reservas/
 │       ├── pages/                   # Páginas (login, etc.)
 │       ├── services/                 # Llamadas a la API
 │       ├── utils/                    # Funciones auxiliares
-│       ├── App.jsx                   # Rutas
+│       ├── App.jsx                   # Configuración de rutas principal
 │       ├── main.jsx
 │
 └── README.md                     
