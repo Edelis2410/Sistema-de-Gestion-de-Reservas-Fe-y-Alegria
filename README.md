@@ -3,20 +3,20 @@ Sistema de información desarrollado para la U.E. Colegio Fe y Alegría Puerto O
 
 Tecnologías Utilizadas:
 Frontend
-React 18 con Vite
-React Router DOM para enrutamiento
-Tailwind CSS para estilos
-Lucide React para iconos
-jsPDF + jspdf-autotable para generación de reportes PDF
-Context API para gestión de estado (autenticación)
+- React con Vite
+- React Router DOM para enrutamiento
+- Tailwind CSS para estilos
+- Lucide React para iconos
+- jsPDF + jspdf-autotable para generación de reportes PDF
+- Context API para gestión de estado (autenticación)
 
 Backend
-Node.js con Express
-Prisma ORM para interacción con la base de datos
-PostgreSQL como base de datos relacional
-JWT (JSON Web Tokens) para autenticación
-Bcryptjs para hashing de contraseñas
-Nodemailer para envío de correos
+- Node.js con Express
+- Prisma ORM para interacción con la base de datos
+- PostgreSQL como base de datos relacional
+- JWT (JSON Web Tokens) para autenticación
+- Bcryptjs para hashing de contraseñas
+- Nodemailer para envío de correos
 
 Estrutura del proyecto.
 ```
