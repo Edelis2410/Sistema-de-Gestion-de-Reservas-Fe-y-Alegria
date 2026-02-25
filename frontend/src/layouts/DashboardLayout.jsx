@@ -28,7 +28,7 @@ const DashboardLayout = () => {
     window.scrollTo({
       top: 0,
       left: 0,
-      behavior: 'instant' // Cambia a 'smooth' si quieres animación suave
+      behavior: 'instant' 
     });
   }, [location.pathname]);
 

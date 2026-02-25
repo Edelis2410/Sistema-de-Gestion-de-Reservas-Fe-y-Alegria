@@ -73,7 +73,7 @@ const EspacioCard = ({
         )}
       </div>
 
-      {/* ✅ BOTONES DE ADMINISTRACIÓN (Ahora en la parte inferior derecha) */}
+      {/* BOTONES DE ADMINISTRACIÓN  */}
       {isAdmin && (
         <div className="absolute bottom-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-y-2 group-hover:translate-y-0">
           <div className="flex gap-1 bg-white/90 backdrop-blur-md p-1.5 rounded-2xl shadow-xl border border-gray-100">

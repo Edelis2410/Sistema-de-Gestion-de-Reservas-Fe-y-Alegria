@@ -6,7 +6,7 @@ exports.getNotificaciones = async (req, res) => {
     try {
         const notificaciones = await prisma.notificacion.findMany({
             where: { 
-                usuario_id: req.user.id // Correcto: con guion bajo
+                usuario_id: req.user.id 
             },
             orderBy: { 
                 fecha_envio: 'desc' 
@@ -43,11 +43,11 @@ exports.marcarTodasLeidas = async (req, res) => {
     try {
         await prisma.notificacion.updateMany({
             where: { 
-                usuario_id: req.user.id, // CORREGIDO: de 'usuarioId' a 'usuario_id'
-                leido: false             // CORREGIDO: de 'leida' a 'leido'
+                usuario_id: req.user.id, // de 'usuarioId' a 'usuario_id'
+                leido: false             //  de 'leida' a 'leido'
             },
             data: { 
-                leido: true              // CORREGIDO: de 'leida' a 'leido'
+                leido: true              //  de 'leida' a 'leido'
             }
         });
         res.json({ success: true });

@@ -28,7 +28,7 @@ const getAllReservas = async (req, res) => {
     }
 };
 
-// --- 2. VERIFICAR DISPONIBILIDAD (VERSIÓN PRISMA) ---
+// --- 2. VERIFICAR DISPONIBILIDAD ---
 const checkDisponibilidad = async (req, res) => {
     try {
         const { espacio_id, fecha, hora_inicio, hora_fin } = req.query;

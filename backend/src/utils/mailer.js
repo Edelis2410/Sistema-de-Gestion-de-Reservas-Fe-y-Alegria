@@ -5,7 +5,7 @@ const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: 'sistemareserva.feyalegria2026@gmail.com', // Tu correo de Gmail
-    pass: 'hbuk znsr vtee jabq' // Las 16 letras de Google
+    pass: 'hbjk znsr vtie janm' // Las 16 letras de Google
   }
 });
 
@@ -129,7 +129,7 @@ transporter.verify((error, success) => {
     if (error) {
         console.error('Error en la configuración del correo:', error);
     } else {
-        console.log('✅ Servidor de correos listo para enviar mensajes');
+        console.log(' Servidor de correos listo para enviar mensajes');
     }
 });
 

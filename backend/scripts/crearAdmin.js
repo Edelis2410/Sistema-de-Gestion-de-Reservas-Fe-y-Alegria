@@ -66,7 +66,7 @@ async function crearAdmin() {
     console.log(`   Nombre: ${admin.nombre}`);
     console.log(`   Rol: ${rolAdmin.nombre} (ID: ${rolAdmin.id})`);
     console.log('\n IMPORTANTE:');
-    console.log('   1. Intenta loguearte con: admin@colegio.edu / Admin123!');
+    console.log('   1. Intenta loguearte con: edelismb@gmail.com / Admin123!');
     console.log('   2. El historial de reservas ahora debería estar en 0.');
     
   } catch (error) {

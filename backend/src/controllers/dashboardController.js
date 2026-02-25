@@ -90,7 +90,7 @@ exports.getDocenteStats = async (req, res) => {
     }
 };
 
-// --- 3. REPORTE ESTADÍSTICO (Módulo de Reportes) - VERSIÓN SIMPLIFICADA ---
+// --- 3. REPORTE ESTADÍSTICO (Módulo de Reportes) ---
 exports.getReporteEstadisticas = async (req, res) => {
     try {
         const { periodo } = req.query;
@@ -134,7 +134,7 @@ exports.getReporteEstadisticas = async (req, res) => {
                 id: true,
                 nombre: true,
                 activo: true,
-                fecha_creacion: true,  // ← NUEVO: incluimos la fecha de creación
+                fecha_creacion: true,  
                 reservas: {
                     where: whereReserva,
                     select: { hora_inicio: true, hora_fin: true }

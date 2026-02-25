@@ -6,7 +6,7 @@ exports.getAllEspacios = async (req, res) => {
   try {
     const { search = '', tipo = '' } = req.query;
     
-    // ✅ CLAVE: Filtramos para que NUNCA se vean los que tienen eliminado: true
+    //CLAVE: Filtramos para que NUNCA se vean los que tienen eliminado: true
     // Pero permitimos que se vean los activo: false (para que aparezcan atenuados)
     const where = {
       eliminado: false
@@ -140,7 +140,7 @@ exports.deleteEspacio = async (req, res) => {
       }
     });
 
-    // 2. Auditoría protegida (Aquí estaba el error)
+    // 2. Auditoría 
     // Usamos ?. para que si req.user es undefined, no explote el código
     const usuarioId = req.user?.id || null; 
 

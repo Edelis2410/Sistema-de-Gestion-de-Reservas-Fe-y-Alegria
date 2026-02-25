@@ -120,7 +120,7 @@ export const AuthProvider = ({ children }) => {
     user,
     login,
     logout,
-    updateUser, // Ahora ya envía datos
+    updateUser, 
     loading,
     isAuthenticated,
     userRole: user?.rol || null,

@@ -27,7 +27,7 @@ const Header = ({
     return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   };
 
-  // --- MAPEO DE PALABRAS CLAVE A RUTAS (CORREGIDO: separar inicio y dashboard) ---
+  // --- MAPEO DE PALABRAS CLAVE A RUTAS  ---
   const routeMappings = {
     administrador: [
       { keywords: ['inicio'], path: '/admin/inicio' },                // Ahora "inicio" va a /admin/inicio

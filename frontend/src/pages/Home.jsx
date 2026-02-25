@@ -13,15 +13,15 @@ import capillaImage from '../assets/images/capilla_.png';
 
 const Home = () => {
   const navigate = useNavigate();
-  const location = useLocation(); // ✅ 3. Obtener la ubicación actual
+  const location = useLocation(); // 3. Obtener la ubicación actual
 
-  // ✅ 4. Subir scroll automáticamente cada vez que se visita el Home
+  // 4. Subir scroll automáticamente cada vez que se visita el Home
   useEffect(() => {
     if (location.pathname === '/') {
       window.scrollTo({
         top: 0,
         left: 0,
-        behavior: 'instant' // Cambia a 'smooth' si quieres animación suave
+        behavior: 'instant' 
       });
     }
   }, [location.pathname]);

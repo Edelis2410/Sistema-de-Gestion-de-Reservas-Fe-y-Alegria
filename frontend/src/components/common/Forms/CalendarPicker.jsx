@@ -57,7 +57,7 @@ const CalendarPicker = ({
       const dayDate = new Date(year, month, i);
       const dayOfWeek = dayDate.getDay();
       
-      // CAMBIO AQUÍ: Usamos "disabled" para que coincida con la propiedad que lee el botón
+      // Usamos "disabled" para que coincida con la propiedad que lee el botón
       const disabled = disabledDays.includes(dayOfWeek);
       
       const isSelected = selectedDate && 
