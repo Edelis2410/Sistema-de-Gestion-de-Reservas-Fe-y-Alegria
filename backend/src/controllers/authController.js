@@ -1,4 +1,7 @@
 // src/controllers/authController.js 
+// Controlador de autenticación: maneja inicio de sesión, 
+// obtención del usuario actual y cambio de contraseña.
+
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { prisma } = require('../config/database');
