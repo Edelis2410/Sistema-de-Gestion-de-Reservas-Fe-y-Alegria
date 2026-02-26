@@ -1,4 +1,6 @@
 // src/middleware/authMiddleware.js
+// Middleware de autenticación: verifica token JWT, valida usuario activo y adjunta datos a la request. Incluye control de roles.
+
 const jwt = require('jsonwebtoken');
 const { prisma } = require('../config/database');
 
