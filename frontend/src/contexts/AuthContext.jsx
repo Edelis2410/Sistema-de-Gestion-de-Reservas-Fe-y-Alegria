@@ -1,4 +1,6 @@
 // src/contexts/AuthContext.jsx
+// Contexto de autenticación: gestiona el estado global del usuario, login, logout, actualización de perfil y verificación de token.
+
 import { createContext, useState, useContext, useEffect } from 'react';
 import { 
   saveAuthData, 
