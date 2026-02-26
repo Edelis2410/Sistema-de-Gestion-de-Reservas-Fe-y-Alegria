@@ -29,7 +29,6 @@ sistema-reservas/
 │   │   ├── controllers/          # Lógica de negocio (reservas, usuarios, etc.)
 │   │   ├── middlewares/          # Middlewares (autenticación, validación)
 │   │   ├── routes/               # Definición de rutas de la API
-│   │   ├── services/             # Servicios (notificaciones, etc.)
 │   │   ├── utils/                 # Utilidades (mailer, etc.)
 │   │   └── server.js              # Archivo principal que inicia el servidor y monta las rutas.
 │   ├── .env                       # Variables de entorno
@@ -43,7 +42,7 @@ sistema-reservas/
 │       │   ├── common/            # Componentes genéricos (Calendar, UI, etc.)
 │       │   └── layout/            # Componentes de estructura (Header, Sidebar)
 │       ├── config/                 # Configuración (ej. variables de entorno)
-│       ├── contexts/               # Contextos de React (ej. AuthContext)
+│       ├── contexts/               # Contextos de React (AuthContext)
 │       ├── dashboard/              # Vistas específicas por rol
 │       │   ├── admin/              # Vistas y componentes del administrador
 │       │   ├── docente/            # Vistas del docente
