@@ -1,4 +1,6 @@
 // src/App.jsx
+// Componente principal de la aplicación. Define las rutas públicas y protegidas, los layouts correspondientes y la lógica de autenticación.
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
