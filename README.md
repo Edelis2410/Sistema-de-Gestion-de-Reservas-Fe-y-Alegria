@@ -57,3 +57,11 @@ sistema-reservas/
 │
 └── README.md                     
 ```
+
+> ⚠️ **Nota sobre datos de ejemplo**  
+> Este repositorio contiene direcciones IP, correos electrónicos y contraseñas de ejemplo (como `http://192.168.0.191:5000`, o `Admin123!`) que son únicamente para fines de demostración. **No deben utilizarse en entornos de producción**.  
+>  
+> Antes de desplegar el sistema, asegúrate de:  
+> 1. Cambiar las IPs y URLs en los archivos de configuración (`.env` del backend y del frontend) por las correspondientes a tu servidor real.  
+> 2. Modificar las credenciales por defecto (correo y contraseña del administrador) por unas seguras y propias.  
+
