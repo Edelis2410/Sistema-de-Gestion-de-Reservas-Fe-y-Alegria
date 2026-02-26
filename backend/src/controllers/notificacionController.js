@@ -1,3 +1,6 @@
+// Controlador de notificaciones: obtiene, marca como leídas individualmente 
+// o todas las notificaciones del usuario autenticado.
+
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
