@@ -1,4 +1,6 @@
 // src/hooks/useReservationForm.js
+// Hook personalizado para gestionar el estado del formulario de reserva, incluyendo fecha, hora, validaciones y reseteo para pruebas
+
 import { useState } from 'react';
 
 export const useReservationForm = (initialState = {}) => {
