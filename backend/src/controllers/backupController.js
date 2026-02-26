@@ -1,4 +1,7 @@
 // backend/src/controllers/backupController.js
+// Controlador de backup: genera un volcado de la base de datos 
+// y lo envía como descarga y por correo al administrador.
+
 const { spawn } = require('child_process');
 const fs = require('fs');
 const os = require('os');
