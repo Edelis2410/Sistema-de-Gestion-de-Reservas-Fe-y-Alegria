@@ -1,3 +1,5 @@
+// Controlador de usuarios: maneja autenticación, perfil, preferencias, CRUD de usuarios (solo administradores) y recuperación de contraseña.
+
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { enviarCorreoAprobacion, enviarCorreoRechazo, enviarCorreoModificacion, enviarCorreoNuevaSolicitud } = require('../utils/mailer');
