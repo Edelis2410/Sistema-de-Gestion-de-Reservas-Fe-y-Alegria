@@ -1,3 +1,5 @@
+// Archivo principal del servidor Express. Configura middlewares, autenticación y define todas las rutas de la API.
+
 process.env.TZ = "America/Caracas";
 require('dotenv').config(); // Carga las variables de entorno desde .env
 
