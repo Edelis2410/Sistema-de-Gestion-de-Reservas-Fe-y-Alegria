@@ -1,4 +1,7 @@
 // scripts/crearAdmin.js
+// Script para crear el primer usuario administrador en el sistema. 
+// Verifica roles existentes y genera un administrador por defecto.
+
 require('dotenv').config();
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
