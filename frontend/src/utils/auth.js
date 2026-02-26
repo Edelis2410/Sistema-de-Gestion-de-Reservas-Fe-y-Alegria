@@ -1,4 +1,6 @@
 // src/utils/auth.js
+// Utilidades de autenticación: manejo de token y usuario en localStorage, verificación de sesión, cierre de sesión, peticiones autenticadas (authFetch) y funciones auxiliares.
+
 const API_URL = 'http://192.168.0.191:5000/api';
 
 // ======================
