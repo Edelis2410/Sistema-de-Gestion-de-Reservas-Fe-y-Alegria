@@ -1,3 +1,6 @@
+// Controlador de dashboard y reportes: obtiene estadísticas para administradores y docentes, 
+// y genera datos para reportes.
+
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
