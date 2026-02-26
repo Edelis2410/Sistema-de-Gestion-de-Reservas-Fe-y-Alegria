@@ -1,4 +1,6 @@
 // src/services/api.js
+// Configuración de Axios para peticiones HTTP a la API. Define interceptores para autenticación y manejo de errores, y servicios para cada entidad (auth, espacios, reservas, usuarios).
+
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://192.168.0.191:5000/api';
