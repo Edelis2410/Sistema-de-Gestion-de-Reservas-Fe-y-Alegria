@@ -12,5 +12,3 @@ PS C:\Users\Win 11\Documents\sistema-reservas-espacios\backend> npm run dev
 🔑 Login: POST http://localhost:5000/api/auth/login
 📋 Espacios: GET http://localhost:5000/api/espacios
 📝 Reservas: POST http://localhost:5000/api/reservas
-
-hbuk znsr vtee jabq
